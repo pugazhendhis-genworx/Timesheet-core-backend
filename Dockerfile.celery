@@ -17,15 +17,13 @@ RUN pip install --no-cache-dir \
     google-auth \
     google-auth-oauthlib \
     pydantic-settings \
+    email-validator \
     asyncpg \
     psycopg2-binary \
     sqlalchemy
 
 # Create non-root user for Celery
 RUN addgroup --system celery && adduser --system --ingroup celery celery
-
-# Install gosu for dropping privileges after fixing permissions
-RUN apt-get update && apt-get install -y --no-install-recommends gosu && rm -rf /var/lib/apt/lists/*
 
 COPY src/ src/
 COPY entrypoint.sh /entrypoint.sh

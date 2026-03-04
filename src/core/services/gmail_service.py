@@ -26,7 +26,7 @@ def save_history_id(history_id):
 def load_history_id():
     if not os.path.exists(HISTORY_FILE):
         return None
-    with open(HISTORY_FILE, "r") as f:
+    with open(HISTORY_FILE) as f:
         return f.read().strip()
 
 
