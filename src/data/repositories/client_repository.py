@@ -10,11 +10,11 @@ async def get_client_by_client_id(client_id, db):
     result = await db.execute(select(Client).where(Client.client_id == client_id))
     return result.scalar_one()
 
+
 async def get_client_by_id(db: AsyncSession, client_id):
-    result = await db.execute(
-        select(Client).where(Client.client_id == client_id)
-    )
+    result = await db.execute(select(Client).where(Client.client_id == client_id))
     return result.scalar_one_or_none()
+
 
 async def get_all_clients(db):
     result = await db.execute(select(Client))
@@ -27,6 +27,7 @@ async def create_client(db: AsyncSession, client_data: ClientCreate):
         client_name=client_data.client_name,
         client_code=client_data.client_code,
         client_email=client_data.client_email,
+        created_by=client_data.created_by,
     )
 
     db.add(new_client)

@@ -20,8 +20,8 @@ async def get_all_whitelist_emails(db=Depends(get_pg_session)):
 
 
 @whitelist_router.get("/{client_id}", response_model=EmailWhitelistResponse)
-async def get_whitelist_by_id(whitelist_id: UUID, db=Depends(get_pg_session)):
-    return await get_whitelist_by_clientid_service(whitelist_id, db)
+async def get_whitelist_by_id(client_id: UUID, db=Depends(get_pg_session)):
+    return await get_whitelist_by_clientid_service(client_id, db)
 
 
 @whitelist_router.post("/add_email", response_model=EmailWhitelistResponse)
