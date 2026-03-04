@@ -8,6 +8,7 @@ class ClientCreate(BaseModel):
     client_name: str
     client_code: str
     client_email: EmailStr
+    created_by: str
 
 
 class ClientResponse(BaseModel):
@@ -17,6 +18,7 @@ class ClientResponse(BaseModel):
     client_email: EmailStr
     is_active: bool
     created_at: datetime
+    created_by: str
 
     class Config:
         from_attributes = True

@@ -12,6 +12,11 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d TimeIQ"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: always
 
   auth_backend:
@@ -20,7 +25,8 @@ services:
     env_file:
       - E:\Time_IQ_Auth_service\.env
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     ports:
       - "8000:8000"
     restart: always
@@ -31,8 +37,13 @@ services:
     env_file:
       - .\.env
     environment:
-      - POSTGRES_DB_URL=postgresql+asyncpg://postgres:pugazh%402005@host.docker.internal:5432/TimeIQ
-      - SYNC_POSTGRES_DB_URL=postgresql+psycopg2://postgres:pugazh%402005@host.docker.internal:5432/TimeIQ
+      - POSTGRES_DB_URL=postgresql+asyncpg://postgres:postgres@db:5432/TimeIQ
+      - SYNC_POSTGRES_DB_URL=postgresql+psycopg2://postgres:postgres@db:5432/TimeIQ
+    depends_on:
+      db:
+        condition: service_healthy
+      auth_backend:
+        condition: service_started
     ports:
       - "8001:8001"
     restart: always
@@ -66,8 +77,8 @@ services:
       - .env
     environment:
       - REDIS_URL=redis://redis:6379/0
-      - POSTGRES_DB_URL=postgresql+asyncpg://postgres:pugazh%402005@host.docker.internal:5432/TimeIQ
-      - SYNC_POSTGRES_DB_URL=postgresql+psycopg2://postgres:pugazh%402005@host.docker.internal:5432/TimeIQ
+      - POSTGRES_DB_URL=postgresql+asyncpg://postgres:postgres@db:5432/TimeIQ
+      - SYNC_POSTGRES_DB_URL=postgresql+psycopg2://postgres:postgres@db:5432/TimeIQ
     volumes:
       - .:/app
     depends_on:
@@ -84,8 +95,8 @@ services:
       - .env
     environment:
       - REDIS_URL=redis://redis:6379/0
-      - POSTGRES_DB_URL=postgresql+asyncpg://postgres:pugazh%402005@host.docker.internal:5432/TimeIQ
-      - SYNC_POSTGRES_DB_URL=postgresql+psycopg2://postgres:pugazh%402005@host.docker.internal:5432/TimeIQ
+      - POSTGRES_DB_URL=postgresql+asyncpg://postgres:postgres@db:5432/TimeIQ
+      - SYNC_POSTGRES_DB_URL=postgresql+psycopg2://postgres:postgres@db:5432/TimeIQ
     volumes:
       - .:/app
     depends_on:
@@ -102,8 +113,8 @@ services:
       - .env
     environment:
       - REDIS_URL=redis://redis:6379/0
-      - POSTGRES_DB_URL=postgresql+asyncpg://postgres:pugazh%402005@host.docker.internal:5432/TimeIQ
-      - SYNC_POSTGRES_DB_URL=postgresql+psycopg2://postgres:pugazh%402005@host.docker.internal:5432/TimeIQ
+      - POSTGRES_DB_URL=postgresql+asyncpg://postgres:postgres@db:5432/TimeIQ
+      - SYNC_POSTGRES_DB_URL=postgresql+psycopg2://postgres:postgres@db:5432/TimeIQ
     volumes:
       - .:/app
     depends_on:
