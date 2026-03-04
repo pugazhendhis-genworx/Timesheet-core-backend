@@ -1,0 +1,36 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY pyproject.toml .
+COPY .env .
+COPY credentials.json .
+COPY token.json .
+COPY history.txt* ./
+
+# Install pip deps — celery, redis, gmail libs, dotenv
+RUN pip install --no-cache-dir \
+    celery[redis] \
+    redis \
+    python-dotenv \
+    google-api-python-client \
+    google-auth \
+    google-auth-oauthlib \
+    pydantic-settings \
+    asyncpg \
+    psycopg2-binary \
+    sqlalchemy
+
+# Create non-root user for Celery
+RUN addgroup --system celery && adduser --system --ingroup celery celery
+
+# Install gosu for dropping privileges after fixing permissions
+RUN apt-get update && apt-get install -y --no-install-recommends gosu && rm -rf /var/lib/apt/lists/*
+
+COPY src/ src/
+COPY entrypoint.sh /entrypoint.sh
+
+# Give ownership to celery user
+RUN chown -R celery:celery /app && chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]

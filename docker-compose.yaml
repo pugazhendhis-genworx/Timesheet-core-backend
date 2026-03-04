@@ -1,0 +1,86 @@
+services:
+
+
+  backend:
+    build: E:\Time_IQ_Auth_service
+    container_name: TimeIQ_AUTH_SERVICE_Backend
+    env_file:
+      - E:\Time_IQ_Auth_service\.env
+    ports:
+      - "8000:8000"
+    restart: always
+
+  frontend:
+    build: E:\TimeIQ-Front-end
+    container_name: TimeIq-frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    container_name: timeiq-redis-container
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  celery-watcher:
+    build:
+      context: .
+      dockerfile: Dockerfile.celery
+    container_name: timeiq-celery-watcher-final
+    command: celery -A src.workers.celery_app.celery_app worker -Q watcher -n watcher@%h -l info
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - POSTGRES_DB_URL=postgresql+asyncpg://postgres:pugazh%402005@host.docker.internal:5432/TimeIQ
+      - SYNC_POSTGRES_DB_URL=postgresql+psycopg2://postgres:pugazh%402005@host.docker.internal:5432/TimeIQ
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile.celery
+    container_name: timeiq-celery-beat-final
+    command: celery -A src.workers.celery_app.celery_app beat -l info
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - POSTGRES_DB_URL=postgresql+asyncpg://postgres:pugazh%402005@host.docker.internal:5432/TimeIQ
+      - SYNC_POSTGRES_DB_URL=postgresql+psycopg2://postgres:pugazh%402005@host.docker.internal:5432/TimeIQ
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  celery-processor:
+    build:
+      context: .
+      dockerfile: Dockerfile.celery
+    container_name: timeiq-celery-processor-final
+    command: celery -A src.workers.celery_app.celery_app worker -Q processor -n processor@%h -l info -c 4
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - POSTGRES_DB_URL=postgresql+asyncpg://postgres:pugazh%402005@host.docker.internal:5432/TimeIQ
+      - SYNC_POSTGRES_DB_URL=postgresql+psycopg2://postgres:pugazh%402005@host.docker.internal:5432/TimeIQ
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+volumes:
+  redis_data:

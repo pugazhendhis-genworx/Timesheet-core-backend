@@ -1,0 +1,10 @@
+Day 02
+1 modulus operator - working in python(a-(a//b)*b)
+2 mulitiline Strings 
+3 break,continue,else-with loops
+4 pass - (execution,inheritance-to be discussed)
+5 walrus operator -( conditions,expresions)
+6 dictionary - to be discussed
+7 chained expressions
+8 list comprehension
+9 enumerate

@@ -1,0 +1,12 @@
+asyncpg>=0.31.0
+celery[redis]>=5.6.2
+fastapi>=0.115.0
+google-api-python-client>=2.150.0
+google-auth>=2.35.0
+google-auth-oauthlib>=1.2.1
+psycopg2-binary>=2.9.11
+pydantic-settings>=2.13.1
+python-dotenv>=1.2.2
+redis>=6.4.0
+sqlalchemy>=2.0.47
+uvicorn>=0.32.0
