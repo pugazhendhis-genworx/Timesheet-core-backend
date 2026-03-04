@@ -27,7 +27,7 @@ async def get_whitelisted_email_by_client_id(client_id, db):
     result = await db.execute(
         select(EmailWhitelist).where(EmailWhitelist.client_id == client_id)
     )
-    whitelisted_emails = result.scalar_one_or_more()
+    whitelisted_emails = result.scalar_one_or_none()
     return whitelisted_emails
 
 
