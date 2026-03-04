@@ -1,7 +1,11 @@
 from fastapi import APIRouter
 
-from src.core.services.gmail_service import fetch_new_emails, get_message_detail, mark_as_read, save_attachments
-
+from src.core.services.gmail_service import (
+    fetch_new_emails,
+    get_message_detail,
+    mark_as_read,
+    save_attachments,
+)
 
 email_router = APIRouter(tags=["email"])
 
