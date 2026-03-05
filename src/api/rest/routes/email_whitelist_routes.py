@@ -10,7 +10,7 @@ from src.core.services.email_whitelist_services import (
 )
 from src.schemas.email_schemas import EmailWhitelistCreate, EmailWhitelistResponse
 
-whitelist_router = APIRouter(tags=["Whitelist"])
+whitelist_router = APIRouter(tags=["Whitelist"], prefix="/whitelist")
 
 
 @whitelist_router.get("/get-all-whitelisted-emails")
