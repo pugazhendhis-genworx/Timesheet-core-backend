@@ -1,5 +1,6 @@
 import logging
 
+# mypy: ignore-errors
 from celery import shared_task
 
 from src.core.services.email_ingestion import ingest_email_sync
@@ -53,4 +54,4 @@ def process_email(self, gmail_message_id: str):
 
     except Exception as e:
         logger.error(f"Error processing email {gmail_message_id}: {e}")
-        raise self.retry(exc=e)
+        raise self.retry(exc=e) from e

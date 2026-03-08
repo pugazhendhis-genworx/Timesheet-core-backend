@@ -20,10 +20,10 @@ services:
     restart: always
 
   auth_backend:
-    build: E:\Time_IQ_Auth_service
+    build: ../Time_IQ_Auth_backend
     container_name: auth_Backend
     env_file:
-      - E:\Time_IQ_Auth_service\.env
+      - ../Time_IQ_Auth_backend/.env
     depends_on:
       db:
         condition: service_healthy
@@ -32,10 +32,10 @@ services:
     restart: always
   
   core_backend:
-    build: .\
+    build: ./
     container_name: TimeIQ_core_backend
     env_file:
-      - .\.env
+      - ./.env
     environment:
       - POSTGRES_DB_URL=postgresql+asyncpg://postgres:postgres@db:5432/TimeIQ
       - SYNC_POSTGRES_DB_URL=postgresql+psycopg2://postgres:postgres@db:5432/TimeIQ
@@ -49,7 +49,7 @@ services:
     restart: always
 
   frontend:
-    build: E:\TimeIQ-Front-end
+    build: ../TimeIQ-FrontEnd
     container_name: TimeIq-frontend
     depends_on:
       - auth_backend
@@ -81,6 +81,8 @@ services:
       - SYNC_POSTGRES_DB_URL=postgresql+psycopg2://postgres:postgres@db:5432/TimeIQ
     volumes:
       - .:/app
+      - ./token.json:/app/token.json
+      - ./credentials.json:/app/credentials.json
     depends_on:
       - redis
     restart: unless-stopped
@@ -90,7 +92,7 @@ services:
       context: .
       dockerfile: Dockerfile.celery
     container_name: timeiq-celery-beat-final
-    command: celery -A src.workers.celery_app.celery_app beat -l info
+    command: celery -A src.workers.celery_app.celery_app beat -l info --schedule=/tmp/celerybeat-schedule
     env_file:
       - .env
     environment:
@@ -99,6 +101,8 @@ services:
       - SYNC_POSTGRES_DB_URL=postgresql+psycopg2://postgres:postgres@db:5432/TimeIQ
     volumes:
       - .:/app
+      - ./token.json:/app/token.json
+      - ./credentials.json:/app/credentials.json
     depends_on:
       - redis
     restart: unless-stopped
@@ -117,6 +121,8 @@ services:
       - SYNC_POSTGRES_DB_URL=postgresql+psycopg2://postgres:postgres@db:5432/TimeIQ
     volumes:
       - .:/app
+      - ./token.json:/app/token.json
+      - ./credentials.json:/app/credentials.json
     depends_on:
       - redis
     restart: unless-stopped
