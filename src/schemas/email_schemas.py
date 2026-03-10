@@ -18,3 +18,30 @@ class EmailWhitelistResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class EmailAttachmentResponse(BaseModel):
+    attachment_id: UUID
+    file_name: str
+    file_type: str
+    file_path: str
+
+    class Config:
+        from_attributes = True
+
+
+class EmailMessageResponse(BaseModel):
+    email_message_id: UUID
+    thread_id: UUID
+    message_id: str
+    sender_email: str
+    subject: str | None
+    body: str | None
+    received_at: datetime
+    is_reply: bool | None
+    processed_status: str | None
+    classification: str | None
+    attachments: list[EmailAttachmentResponse] = []
+
+    class Config:
+        from_attributes = True

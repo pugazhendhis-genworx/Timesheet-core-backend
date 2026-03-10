@@ -1,11 +1,38 @@
 import uuid
+from enum import StrEnum
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Text
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from src.data.clients.database import Base
+
+
+class EmailClassification(StrEnum):
+    TIMESHEET = "TIMESHEET"
+    OTHER = "OTHER"
+
+
+class ProcessedStatus(StrEnum):
+    INGESTED = "INGESTED"
+    CLASSIFYING = "CLASSIFYING"
+    CLASSIFIED = "CLASSIFIED"
+    IGNORED = "IGNORED"
+    EXTRACTING = "EXTRACTING"
+    EXTRACTED = "EXTRACTED"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    NEEDS_REVIEW = "NEEDS_REVIEW"
 
 
 class EmailThread(Base):
@@ -30,7 +57,16 @@ class EmailMessage(Base):
     body = Column(Text)
     received_at = Column(DateTime(timezone=True), server_default=func.now())
     is_reply = Column(Boolean)
-    processed_status = Column(String)
+    processed_status = Column(
+        Enum(ProcessedStatus, name="processed_status_enum", native_enum=False),
+        default=ProcessedStatus.INGESTED,
+    )
+    classification = Column(
+        Enum(EmailClassification, name="email_classification_enum", native_enum=False),
+        nullable=True,
+    )
+    retry_count = Column(Integer, default=0)
+    last_error = Column(Text, nullable=True)
 
     thread = relationship("EmailThread", back_populates="messages")
     attachments = relationship("EmailAttachment", back_populates="email_message")
@@ -47,6 +83,12 @@ class EmailAttachment(Base):
     file_type = Column(String(100))
     file_path = Column(Text)
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
+    processing_status = Column(
+        Enum(ProcessedStatus, name="processed_status_enum", native_enum=False),
+        nullable=True,
+    )
+    extracted_text = Column(Text, nullable=True)
+    last_error = Column(Text, nullable=True)
 
     email_message = relationship("EmailMessage", back_populates="attachments")
 

@@ -3,6 +3,7 @@ from src.data.models.postgres.email_model import (
     EmailAttachment,
     EmailMessage,
     EmailThread,
+    ProcessedStatus,
 )
 from src.data.repositories.client_repository import (
     get_client_by_client_id,
@@ -90,7 +91,7 @@ async def ingest_email(detail, db):
             subject=email_data["subject"],
             body=_resolve_body(email_data),
             is_reply=is_reply_flag,
-            processed_status="RECEIVED",
+            processed_status=ProcessedStatus.INGESTED,
         ),
         db,
     )
@@ -154,7 +155,7 @@ def ingest_email_sync(detail, db):
             subject=email_data["subject"],
             body=_resolve_body(email_data),
             is_reply=is_reply_flag,
-            processed_status="RECEIVED",
+            processed_status=ProcessedStatus.INGESTED,
         ),
         db,
     )
