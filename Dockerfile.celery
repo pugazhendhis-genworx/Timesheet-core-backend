@@ -5,7 +5,6 @@ WORKDIR /app
 COPY pyproject.toml .
 COPY .env .
 COPY credentials.json .
-COPY token.json .
 COPY history.txt* ./
 
 # Install pip deps — celery, redis, gmail libs, dotenv
