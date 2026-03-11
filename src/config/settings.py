@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
     EMAIL_QUEUE_NAME: str = "email_ingest_queue"
     WATCH_INTERVAL_SECONDS: int = 30
+    GROQ_API_KEY: str
+    GEMINI_API_KEY: str
 
     class Config:
         env_file = ".env"
