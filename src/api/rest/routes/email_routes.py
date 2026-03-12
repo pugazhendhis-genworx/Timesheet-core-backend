@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Depends, Query
+from typing import Annotated
 
-from src.api.rest.dependencies import get_pg_session
+from fastapi import APIRouter, Query
+
+from src.api.rest.dependencies import DBSession
 from src.core.services.email_services import get_all_emails_service
 from src.core.services.gmail_service import (
     fetch_new_emails,
@@ -15,14 +17,14 @@ email_router = APIRouter(tags=["email"])
 
 @email_router.get("/get-emails", response_model=list[EmailMessageResponse])
 async def get_emails(
-    classification: str | None = Query(
-        default=None,
-        description=(
-            "Optional filter, e.g. 'timesheet' "
-            "to return only timesheet emails."
+    db: DBSession,
+    classification: Annotated[
+        str | None,
+        Query(
+            description="Optional filter, e.g. 'timesheet' to return only timesheet "
+            "emails."
         ),
-    ),
-    db=Depends(get_pg_session),
+    ] = None,
 ):
     emails = await get_all_emails_service(db)
     if classification:

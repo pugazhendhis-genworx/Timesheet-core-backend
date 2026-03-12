@@ -2,6 +2,7 @@ from uuid import UUID
 
 from fastapi import HTTPException
 
+from src.constants.error_constants import ASSIGNMENT_NOT_FOUND
 from src.data.repositories.assignment_repository import (
     create_assignment,
     delete_assignment,
@@ -22,10 +23,13 @@ async def get_all_assignments_service(db):
 
 
 async def get_assignment_by_id_service(db, assignment_id: UUID):
-    assignment = await get_assignment_by_id(db, assignment_id)
-    if not assignment:
-        raise HTTPException(status_code=404, detail="Assignment not found")
-    return assignment
+    try:
+        assignment = await get_assignment_by_id(db, assignment_id)
+        if not assignment:
+            raise HTTPException(status_code=404, detail=ASSIGNMENT_NOT_FOUND)
+        return assignment
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 async def get_assignments_by_employee_service(db, employee_id: UUID):
@@ -52,14 +56,20 @@ async def create_assignment_service(db, assignment_data: AssignmentCreate):
 async def update_assignment_service(
     db, assignment_id: UUID, assignment_data: AssignmentUpdate
 ):
-    assignment = await update_assignment(db, assignment_id, assignment_data)
-    if not assignment:
-        raise HTTPException(status_code=404, detail="Assignment not found")
-    return assignment
+    try:
+        assignment = await update_assignment(db, assignment_id, assignment_data)
+        if not assignment:
+            raise HTTPException(status_code=404, detail=ASSIGNMENT_NOT_FOUND)
+        return assignment
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 async def delete_assignment_service(db, assignment_id: UUID):
-    assignment = await delete_assignment(db, assignment_id)
-    if not assignment:
-        raise HTTPException(status_code=404, detail="Assignment not found")
-    return assignment
+    try:
+        assignment = await delete_assignment(db, assignment_id)
+        if not assignment:
+            raise HTTPException(status_code=404, detail=ASSIGNMENT_NOT_FOUND)
+        return assignment
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e

@@ -12,9 +12,9 @@ class ApprovalCreate(BaseModel):
 class ApprovalResponse(BaseModel):
     approval_id: UUID
     timesheet_id: UUID
-    approved_by: UUID | None
+    approved_by: UUID | None = None
     decision: str
-    decision_at: datetime | None
+    decision_at: datetime | None = None
 
     class Config:
         from_attributes = True

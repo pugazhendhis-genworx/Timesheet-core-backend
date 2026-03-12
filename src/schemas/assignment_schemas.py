@@ -35,7 +35,7 @@ class AssignmentResponse(BaseModel):
     regular_rate: Decimal
     overtime_rate: Decimal
     double_time_rate: Decimal
-    paycode_id: UUID | None
+    paycode_id: UUID | None = None
     is_active: bool
 
     class Config:

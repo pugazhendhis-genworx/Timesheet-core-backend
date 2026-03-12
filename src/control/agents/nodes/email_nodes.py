@@ -1,9 +1,12 @@
 import json
 import logging
 
+import anyio
+from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 from groq import Groq
+from langfuse import observe
 from sqlalchemy import select
 
 from src.config.settings import settings
@@ -15,6 +18,7 @@ from src.data.models.postgres.email_model import EmailThread
 from src.data.repositories.email_repository import get_attachments, get_email_by_id
 
 logger = logging.getLogger(__name__)
+load_dotenv()
 
 
 gemini_client = genai.Client(api_key=settings.GEMINI_API_KEY)
@@ -46,6 +50,7 @@ def _strip_json(text: str) -> str:
 # =====================================================
 
 
+@observe()
 async def load_email(state):
 
     try:
@@ -83,6 +88,7 @@ async def load_email(state):
 # =====================================================
 
 
+@observe()
 async def extract_attachment_text(state):
 
     texts = []
@@ -104,13 +110,38 @@ async def extract_attachment_text(state):
 
             elif file_type in ["pdf", "image"]:
                 prompt = """
-Extract readable text from this timesheet document.
+Extract all readable text from the provided timesheet document image, including printed
+ and handwritten content.
 
-Return only extracted text.
+Rules:
+
+Read all visible elements available like:
+
+Employee name,Employee_email,Client_name,Dates,In/Start time,Out/End time,Break time,
+ Total hours, Job codes or
+task descriptions, Supervisor notes/signatures, Handwritten corrections,
+Interpret handwritten text carefully.
+If unclear, provide the best guess.
+
+Extract time values exactly (e.g., 8:00, 08:30 AM, 17:45, 8.5, 8h 30m).
+
+Preserve the table structure where possible.
+
+Format rows like:
+
+Date: DD/MM/YYYY | In: HH:MM | Out: HH:MM | Break: XX | Total: XX
+
+If text cannot be read, write:
+
+[unreadable]
+
+Follow natural reading order (top → bottom, left → right).
+
+Output only the extracted text. No explanations.
 """
 
-                with open(att.file_path, "rb") as f:
-                    file_bytes = f.read()
+                async with await anyio.open_file(att.file_path, "rb") as f:
+                    file_bytes = await f.read()
 
                 mime = "application/pdf" if file_type == "pdf" else "image/jpeg"
 
@@ -138,15 +169,16 @@ Return only extracted text.
 
 
 # =====================================================
-# NODE 3 — EMAIL CLASSIFICATION (GROQ)
+# NODE 3 — EMAIL CLASSIFICATION
 # =====================================================
 
 
+@observe()
 async def classify_email(state):
 
     try:
         prompt = f"""
-Determine whether this email contains a timesheet.
+Determine whether this email contains a timesheet details.
 
 Return ONLY JSON.
 
@@ -194,6 +226,7 @@ ATTACHMENTS CONTENT:
 # =====================================================
 
 
+@observe()
 async def extract_timesheet(state):
 
     try:
@@ -205,6 +238,24 @@ Rules:
 - Normalize date as YYYY-MM-DD
 - Normalize time as HH:MM
 - If hours are given without times infer start/end
+Rules for hour calculation:
+    1. If a "Total" or "Total Hours" value is present in the document,
+    treat it as the FINAL worked hours. Do NOT subtract breaks again.
+    2. Only calculate hours using:
+    (End Time - Start Time - Break)
+    when a Total value is NOT provided.
+    3. Break time should only be used if the document does not already
+    provide the final Total hours.
+    4. If Total hours exist, use them directly as regular_hours.
+    5. Never subtract break hours from Total if Total already exists.
+    Example:
+        Input:
+            In: 09:00 AM
+            Out: 06:00 PM
+            Break: 1h
+            Total: 8h
+        Output:
+            regular_hours = 8
 - Return JSON only
 
 {{

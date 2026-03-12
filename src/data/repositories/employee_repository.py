@@ -19,6 +19,11 @@ async def get_employee_by_id(db: AsyncSession, employee_id: UUID):
     return result.scalar_one_or_none()
 
 
+async def get_all_active_employees(db: AsyncSession):
+    result = await db.execute(select(Employee).where(Employee.is_active.is_(True)))
+    return result.scalars().all()
+
+
 async def create_employee(db: AsyncSession, employee_data: EmployeeCreate):
     new_employee = Employee(
         emp_email=employee_data.emp_email,

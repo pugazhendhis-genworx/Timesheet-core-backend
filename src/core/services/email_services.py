@@ -1,8 +1,7 @@
 from fastapi import HTTPException
-from sqlalchemy import select
 
-from src.data.models.postgres.email_model import EmailMessage
 from src.data.repositories.email_repository import (
+    get_all_emailmessages,
     get_attachments,
     get_email_message_ingested,
 )
@@ -11,8 +10,7 @@ from src.schemas.email_schemas import EmailAttachmentResponse, EmailMessageRespo
 
 async def get_all_emails_service(db):
     try:
-        result = await db.execute(select(EmailMessage))
-        emails = result.scalars().all()
+        emails = await get_all_emailmessages(db)
         enriched: list[EmailMessageResponse] = []
         for email in emails:
             attachments = await get_attachments(email.email_message_id, db)

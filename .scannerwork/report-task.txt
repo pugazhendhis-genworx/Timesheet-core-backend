@@ -1,0 +1,6 @@
+projectKey=TimeGaurd
+serverUrl=http://localhost:9000
+serverVersion=26.3.0.120487
+dashboardUrl=http://localhost:9000/dashboard?id=TimeGaurd
+ceTaskId=e284a3e3-d637-40b2-b374-92a3b2b4c980
+ceTaskUrl=http://localhost:9000/api/ce/task?id=e284a3e3-d637-40b2-b374-92a3b2b4c980
