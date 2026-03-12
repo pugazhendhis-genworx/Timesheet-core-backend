@@ -35,12 +35,12 @@ class EmailMessageResponse(BaseModel):
     thread_id: UUID
     message_id: str
     sender_email: str
-    subject: str | None
-    body: str | None
+    subject: str | None = None
+    body: str | None = None
     received_at: datetime
-    is_reply: bool | None
-    processed_status: str | None
-    classification: str | None
+    is_reply: bool | None = None
+    processed_status: str | None = None
+    classification: str | None = None
     attachments: list[EmailAttachmentResponse] = []
 
     class Config:

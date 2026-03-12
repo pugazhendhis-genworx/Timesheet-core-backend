@@ -16,17 +16,17 @@ class TimeEntryDisplayResponse(BaseModel):
     """Time entry with employee and paycode names, plus matching outcome."""
 
     timeentry_id: UUID
-    employee_id: UUID | None
-    employee_name: str | None  # "John Doe" instead of UUID
+    employee_id: UUID | None = None
+    employee_name: str | None = None  # "John Doe" instead of UUID
     client_id: UUID
     client_name: str
-    start_time: datetime | None
-    end_time: datetime | None
+    start_time: datetime | None = None
+    end_time: datetime | None = None
     regular_hours: Decimal
     overtime_hours: Decimal
     double_time_hours: Decimal
-    paycode_id: UUID | None
-    paycode_code: str | None  # "REG", "OT" instead of UUID
+    paycode_id: UUID | None = None
+    paycode_code: str | None = None  # "REG", "OT" instead of UUID
     # --- Matching outcome fields ---
     matching_status: str = "MATCHED"
     employee_unmatched_reason: str | None = None
@@ -43,13 +43,13 @@ class ExtractedTimesheetDisplayResponse(BaseModel):
     received_at: datetime  # from email
     client_id: UUID
     client_name: str
-    week_ending: datetime | None
+    week_ending: datetime | None = None
     status: str
-    extraction_status: str | None  # CLASSIFYING, EXTRACTING, COMPLETED, FAILED
-    extraction_confidence: Decimal | None
-    raw_extraction: dict[str, Any] | None
+    extraction_status: str | None = None  # CLASSIFYING, EXTRACTING, COMPLETED, FAILED
+    extraction_confidence: Decimal | None = None
+    raw_extraction: dict[str, Any] | None = None
     entries: list[TimeEntryDisplayResponse]
-    updated_at: datetime | None
+    updated_at: datetime | None = None
 
     class Config:
         from_attributes = True
@@ -97,8 +97,8 @@ class ExtractionTraceEvent(BaseModel):
     # INGESTED, CLASSIFYING, CLASSIFIED, EXTRACTING, EXTRACTED, MATCHED
     stage: str  # Workflow stage
     status: str  # IN_PROGRESS, SUCCESS, FAILED
-    message: str | None
-    details: dict[str, Any] | None
+    message: str | None = None
+    details: dict[str, Any] | None = None
 
 
 class EmailWithExtractionTraceResponse(BaseModel):
@@ -108,12 +108,12 @@ class EmailWithExtractionTraceResponse(BaseModel):
     thread_id: UUID
     message_id: str
     sender_email: str
-    subject: str | None
+    subject: str | None = None
     received_at: datetime
     # INGESTED, CLASSIFYING, CLASSIFIED, EXTRACTING, COMPLETED, FAILED
     processed_status: str
-    classification: str | None  # TIMESHEET, OTHER
-    last_error: str | None
+    classification: str | None = None  # TIMESHEET, OTHER
+    last_error: str | None = None
     retry_count: int
     file_count: int  # number of attachments
     trace: list[ExtractionTraceEvent]  # workflow history
@@ -135,7 +135,7 @@ class ManualReviewDisplayResponse(BaseModel):
     status: str  # PENDING, APPROVED, REJECTED
     created_at: datetime
     updated_at: datetime
-    comment: str | None
+    comment: str | None = None
     entries: list[TimeEntryDisplayResponse]
 
     class Config:

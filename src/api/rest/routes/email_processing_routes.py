@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, HTTPException
 
-from src.api.rest.dependencies import get_pg_session
+from src.api.rest.dependencies import DBSession
+from src.constants.error_responses import COMMON_ERROR_RESPONSES
 from src.core.services.email_processing_service import (
     process_unprocessed_emails,
     reprocess_failed_emails,
@@ -10,8 +10,8 @@ from src.core.services.email_processing_service import (
 email_process_router = APIRouter(tags=["email-processing"], prefix="/email-processing")
 
 
-@email_process_router.post("/process-all")
-async def process_all_emails(db: AsyncSession = Depends(get_pg_session)):
+@email_process_router.post("/process-all", responses=COMMON_ERROR_RESPONSES)
+async def process_all_emails(db: DBSession):
     try:
         result = await process_unprocessed_emails(db)
         return {
@@ -25,8 +25,8 @@ async def process_all_emails(db: AsyncSession = Depends(get_pg_session)):
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@email_process_router.post("/reprocess-failed")
-async def reprocess_failed_emails_endpoint(db: AsyncSession = Depends(get_pg_session)):
+@email_process_router.post("/reprocess-failed", responses=COMMON_ERROR_RESPONSES)
+async def reprocess_failed_emails_endpoint(db: DBSession):
     try:
         result = await reprocess_failed_emails(db)
         return {

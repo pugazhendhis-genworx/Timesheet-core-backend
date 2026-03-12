@@ -19,12 +19,15 @@ async def get_clients_service(db):
 
 
 async def get_client_by_id_service(db, client_id: UUID):
-    client = await get_client_by_id(db, client_id)
+    try:
+        client = await get_client_by_id(db, client_id)
 
-    if not client:
-        raise HTTPException(status_code=404, detail="Client not found")
+        if not client:
+            raise HTTPException(status_code=404, detail="Client not found")
 
-    return client
+        return client
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 async def create_client_service(db, client_data: ClientCreate):

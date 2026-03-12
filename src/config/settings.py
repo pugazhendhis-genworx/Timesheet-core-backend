@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     WATCH_INTERVAL_SECONDS: int = 30
     GROQ_API_KEY: str
     GEMINI_API_KEY: str
+    LANGFUSE_SECRET_KEY: str
+    LANGFUSE_PUBLIC_KEY: str
+    LANGFUSE_BASE_URL: str
 
     class Config:
         env_file = ".env"

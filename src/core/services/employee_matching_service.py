@@ -1,22 +1,26 @@
 import logging
 from uuid import UUID
 
-from rapidfuzz import fuzz
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
-from src.data.models.postgres.assignment_model import Assignment
-from src.data.models.postgres.client_rule_model import RuleViolation
-from src.data.models.postgres.employee_model import Employee
+from src.data.models.postgres.timesheet_model import Timesheet
+from src.data.repositories.employee_repository import get_all_active_employees
 from src.data.repositories.time_entry_repository import get_entries_by_timesheet_id
 from src.data.repositories.timesheet_repository import (
     get_timesheet_by_id,
     update_timesheet_status,
 )
+from src.utils.matching_utils import (
+    _exact_email_match,
+    _fuzzy_name_match,
+    _is_client_match,
+    _normalized_name_match,
+)
+from src.utils.validation_helper import _validate_assignment
 
 logger = logging.getLogger(__name__)
-
-FUZZY_MATCH_THRESHOLD = 80
 
 
 async def match_employees_for_timesheet(
@@ -38,8 +42,8 @@ async def match_employees_for_timesheet(
     extraction_entries = raw_extraction.get("entries", [])
 
     # Load all active employees
-    result = await db.execute(select(Employee).where(Employee.is_active.is_(True)))
-    all_employees = result.scalars().all()
+
+    all_employees = await get_all_active_employees(db)
 
     all_matched = True
 
@@ -61,11 +65,6 @@ async def match_employees_for_timesheet(
         # Strategy 3: Fuzzy name match
         if not matched_employee and employee_name:
             matched_employee = _fuzzy_name_match(all_employees, employee_name)
-
-        # Strategy 4: Fuzzy email-as-name match (email before @ as name)
-        if not matched_employee and employee_email and "@" in employee_email:
-            name_from_email = employee_email.split("@")[0].replace(".", " ")
-            matched_employee = _fuzzy_name_match(all_employees, name_from_email)
 
         if matched_employee:
             # Set entry status to MATCHED
@@ -125,92 +124,6 @@ async def match_employees_for_timesheet(
     return all_matched
 
 
-def _exact_email_match(employees: list[Employee], email: str) -> Employee | None:
-    email_lower = email.strip().lower()
-    for emp in employees:
-        if emp.emp_email and emp.emp_email.strip().lower() == email_lower:
-            return emp
-    return None
-
-
-def _normalized_name_match(employees: list[Employee], name: str) -> Employee | None:
-    normalized = _normalize(name)
-    for emp in employees:
-        full_name = _normalize(f"{emp.first_name} {emp.last_name}")
-        if full_name == normalized:
-            return emp
-        # Also try reversed order
-        reversed_name = _normalize(f"{emp.last_name} {emp.first_name}")
-        if reversed_name == normalized:
-            return emp
-    return None
-
-
-def _fuzzy_name_match(employees: list[Employee], name: str) -> Employee | None:
-    best_match = None
-    best_score = 0
-
-    normalized_input = _normalize(name)
-
-    for emp in employees:
-        full_name = _normalize(f"{emp.first_name} {emp.last_name}")
-        score = fuzz.token_sort_ratio(normalized_input, full_name)
-        if score > best_score and score >= FUZZY_MATCH_THRESHOLD:
-            best_score = score
-            best_match = emp
-
-    return best_match
-
-
-def _normalize(s: str) -> str:
-    return " ".join(s.strip().lower().split())
-
-
-async def _validate_assignment(
-    db: AsyncSession,
-    employee_id: UUID,
-    client_id: UUID,
-    timesheet_id: UUID,
-) -> bool:
-    """Check if employee has an active assignment for the client.
-    Returns True if valid, False if violation.
-    """
-    result = await db.execute(
-        select(Assignment).where(
-            Assignment.employee_id == employee_id,
-            Assignment.client_id == client_id,
-            Assignment.is_active.is_(True),
-        )
-    )
-    assignment = result.scalar_one_or_none()
-
-    if not assignment:
-        violation = RuleViolation(
-            timesheet_id=timesheet_id,
-            severity="HIGH",
-            description=(
-                f"Employee {employee_id} has no active assignment "
-                f"for client {client_id}"
-            ),
-        )
-        db.add(violation)
-        await db.flush()
-        logger.warning(
-            "Assignment violation: employee %s not assigned to client %s",
-            employee_id,
-            client_id,
-        )
-        return False
-    return True
-
-
-def _get_fuzzy_score(name: str, employee: Employee) -> int:
-    """Get fuzzy match score between name and employee full name."""
-    normalized_input = _normalize(name)
-    full_name = _normalize(f"{employee.first_name} {employee.last_name}")
-    return fuzz.token_sort_ratio(normalized_input, full_name)
-
-
 # ── Client validation ──────────────────────────────────────────────────────
 
 
@@ -227,9 +140,6 @@ async def validate_client_for_timesheet(
 
     Returns True if client is valid, False otherwise.
     """
-    from sqlalchemy.orm import joinedload
-
-    from src.data.models.postgres.timesheet_model import Timesheet
 
     # Load timesheet with client relationship
     result = await db.execute(
@@ -302,22 +212,3 @@ async def validate_client_for_timesheet(
             await db.flush()
 
         return False
-
-
-def _is_client_match(extracted_name: str, system_name: str) -> bool:
-    """Check if extracted client name matches system client name."""
-    # Exact match (case-insensitive)
-    if extracted_name.lower().strip() == system_name.lower().strip():
-        return True
-
-    # Normalized match
-    extracted_normalized = _normalize(extracted_name)
-    system_normalized = _normalize(system_name)
-    if extracted_normalized == system_normalized:
-        return True
-
-    # Fuzzy match (high threshold for client names)
-    score = fuzz.token_sort_ratio(extracted_normalized, system_normalized)
-    if score >= 85:  # Higher threshold for clients (fewer false positives)
-        return True
-    return False

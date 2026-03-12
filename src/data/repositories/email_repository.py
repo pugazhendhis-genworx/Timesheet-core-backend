@@ -17,6 +17,13 @@ async def get_email_thread_by_gmail_id(gmail_thread_id: str, db):
     return result.scalar_one_or_none()
 
 
+async def get_email_client_id_by_thread_id(thread_id, db):
+    result = await db.execute(
+        select(EmailThread.client_id).where(EmailThread.thread_id == thread_id)
+    )
+    return result.scalar_one_or_none()
+
+
 def get_email_thread_by_gmail_id_sync(gmail_thread_id: str, db):
     """Sync — get thread by Gmail thread ID."""
     result = db.execute(
@@ -50,8 +57,20 @@ async def get_email_message_by_message_id(message_id: str, db):
     return result.scalar_one_or_none()
 
 
+async def get_all_emailmessages(db):
+    result = await db.execute(select(EmailMessage))
+    return result.scalars().all()
+
+
 async def get_email_by_id(email_id, db):
     return await db.get(EmailMessage, email_id)
+
+
+async def get_failed_processed_emails(db):
+    result = await db.execute(
+        select(EmailMessage).where(EmailMessage.processed_status == "FAILED")
+    )
+    return result.scalars().all()
 
 
 def get_email_message_by_message_id_sync(message_id: str, db):

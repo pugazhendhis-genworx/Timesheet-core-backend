@@ -1,8 +1,8 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
-from src.api.rest.dependencies import get_pg_session
+from src.api.rest.dependencies import DBSession
 from src.core.services.approval_service import (
     approve_timesheet_service,
     get_all_approvals_service,
@@ -14,12 +14,12 @@ approval_router = APIRouter(tags=["approval"], prefix="/approval")
 
 
 @approval_router.get("/get-approvals", response_model=list[ApprovalResponse])
-async def get_approvals(db=Depends(get_pg_session)):
+async def get_approvals(db: DBSession):
     return await get_all_approvals_service(db)
 
 
 @approval_router.get("/{approval_id}", response_model=ApprovalResponse)
-async def get_approval(approval_id: UUID, db=Depends(get_pg_session)):
+async def get_approval(approval_id: UUID, db: DBSession):
     return await get_approval_by_id_service(db, approval_id)
 
 
@@ -27,7 +27,7 @@ async def get_approval(approval_id: UUID, db=Depends(get_pg_session)):
 async def decide_approval(
     timesheet_id: UUID,
     approval_data: ApprovalCreate,
-    db=Depends(get_pg_session),
+    db: DBSession,
 ):
     """
     Approve or reject a timesheet that is READY_FOR_APPROVAL.

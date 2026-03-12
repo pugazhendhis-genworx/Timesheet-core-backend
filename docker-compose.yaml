@@ -46,6 +46,8 @@ services:
         condition: service_started
     ports:
       - "8001:8001"
+    volumes:
+      - ./attachments:/app/attachments
     restart: always
 
   frontend:
