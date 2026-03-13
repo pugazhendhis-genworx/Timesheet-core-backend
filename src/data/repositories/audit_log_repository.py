@@ -16,3 +16,24 @@ async def get_audit_logs(
     result = await db.execute(stmt)
     return result.scalars().all()
 
+
+async def create_audit_log(
+    db: AsyncSession,
+    action: str,
+    entity_type: str,
+    entity_id,
+    user_id=None,
+    metadata_json=None,
+) -> AuditLog:
+    log = AuditLog(
+        action=action,
+        entity_type=entity_type,
+        entity_id=entity_id,
+        user_id=user_id,
+        metadata_json=metadata_json or {},
+    )
+    db.add(log)
+    await db.commit()
+    await db.refresh(log)
+    return log
+

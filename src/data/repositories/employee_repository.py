@@ -1,8 +1,9 @@
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.data.models.postgres.assignment_model import Assignment
 from src.data.models.postgres.employee_model import Employee
 from src.schemas.employee_schemas import EmployeeCreate, EmployeeUpdate
 
@@ -10,6 +11,36 @@ from src.schemas.employee_schemas import EmployeeCreate, EmployeeUpdate
 async def get_all_employees(db: AsyncSession):
     result = await db.execute(select(Employee))
     return result.scalars().all()
+
+
+async def get_all_employees_with_assign_status_repo(db: AsyncSession):
+    query = (
+        select(
+            Employee,
+            func.coalesce(func.bool_or(Assignment.is_active), False).label("assigned"),
+        )
+        .outerjoin(Assignment, Assignment.employee_id == Employee.employee_id)
+        .group_by(Employee.employee_id)
+    )
+    result = await db.execute(query)
+
+    employees_with_status = []
+    for employee, assigned in result.all():
+        employees_with_status.append(
+            {
+                "employee_id": employee.employee_id,
+                "emp_email": employee.emp_email,
+                "first_name": employee.first_name,
+                "last_name": employee.last_name,
+                "dob": employee.dob,
+                "designation": employee.designation,
+                "is_active": employee.is_active,
+                "created_at": employee.created_at,
+                "assigned": assigned,
+            }
+        )
+
+    return employees_with_status
 
 
 async def get_employee_by_id(db: AsyncSession, employee_id: UUID):

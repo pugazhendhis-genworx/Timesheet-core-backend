@@ -52,7 +52,7 @@ async def process_unprocessed_emails(db: AsyncSession):
                     continue
 
                 # ----Handle timesheet ---
-                timesheet = process_timesheet(email, output, db)
+                timesheet = await process_timesheet(email, output, db)
 
                 processed.append(
                     {
@@ -98,8 +98,7 @@ async def reprocess_failed_emails(db: AsyncSession):
     Returns same structure as process_unprocessed_emails.
     """
     try:
-        result = await get_failed_processed_emails(db)
-        failed_emails = result.scalars().all()
+        failed_emails = await get_failed_processed_emails(db)
 
         if not failed_emails:
             return {

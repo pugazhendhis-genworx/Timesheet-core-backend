@@ -49,3 +49,4 @@ async def process_timesheet(email, output, db):
 
     email.processed_status = "COMPLETED"
     await db.flush()
+    return timesheet

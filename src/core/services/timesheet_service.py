@@ -25,6 +25,7 @@ from src.data.repositories.timesheet_repository import (
     get_timesheets_by_status,
     update_timesheet_status,
 )
+from src.data.repositories.audit_log_repository import create_audit_log
 from src.schemas.timesheet_update_schemas import TimesheetUpdate
 from src.utils.date_formating import _resolve_entry_date, _resolve_week_ending
 from src.utils.payroll_ready_format import _build_payroll_ready_timesheet
@@ -188,6 +189,15 @@ async def submit_for_approval_service(db: AsyncSession, timesheet_id: UUID):
     await db.commit()
     await db.refresh(timesheet)
     logger.info("Timesheet %s submitted for approval", timesheet_id)
+    
+    await create_audit_log(
+        db,
+        action="MOVED_TO_APPROVAL",
+        entity_type="TIMESHEET",
+        entity_id=str(timesheet.timesheet_id),
+        metadata_json={"previous_status": "EXTRACTED/RECEIVED", "new_status": "READY_FOR_APPROVAL"},
+    )
+    
     return timesheet
 
 
@@ -282,6 +292,14 @@ async def decide_timesheet_approval_service(
         timesheet_id,
         decision,
         comment,
+    )
+
+    await create_audit_log(
+        db,
+        action=decision,
+        entity_type="TIMESHEET",
+        entity_id=str(timesheet.timesheet_id),
+        metadata_json={"comment": comment},
     )
 
     return await get_extracted_timesheet_by_id_for_display(db, timesheet_id)

@@ -7,6 +7,7 @@ from src.data.repositories.employee_repository import (
     create_employee,
     delete_employee,
     get_all_employees,
+    get_all_employees_with_assign_status_repo,
     get_employee_by_id,
     update_employee,
 )
@@ -16,6 +17,13 @@ from src.schemas.employee_schemas import EmployeeCreate, EmployeeUpdate
 async def get_all_employees_service(db):
     try:
         return await get_all_employees(db)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+async def get_all_employees_with_assign_status(db):
+    try:
+        return await get_all_employees_with_assign_status_repo(db)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 

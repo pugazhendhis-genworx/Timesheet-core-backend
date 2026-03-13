@@ -12,6 +12,7 @@ from src.data.repositories.assignment_repository import (
     get_assignments_by_employee_id,
     update_assignment,
 )
+from src.data.repositories.audit_log_repository import create_audit_log
 from src.schemas.assignment_schemas import AssignmentCreate, AssignmentUpdate
 
 
@@ -48,7 +49,15 @@ async def get_assignments_by_client_service(db, client_id: UUID):
 
 async def create_assignment_service(db, assignment_data: AssignmentCreate):
     try:
-        return await create_assignment(db, assignment_data)
+        assignment = await create_assignment(db, assignment_data)
+        await create_audit_log(
+            db,
+            action="CREATED",
+            entity_type="ASSIGNMENT",
+            entity_id=str(assignment.assignment_id),
+            metadata_json={"client_id": str(assignment.client_id), "employee_id": str(assignment.employee_id)},
+        )
+        return assignment
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
@@ -60,6 +69,14 @@ async def update_assignment_service(
         assignment = await update_assignment(db, assignment_id, assignment_data)
         if not assignment:
             raise HTTPException(status_code=404, detail=ASSIGNMENT_NOT_FOUND)
+        
+        await create_audit_log(
+            db,
+            action="UPDATED",
+            entity_type="ASSIGNMENT",
+            entity_id=str(assignment.assignment_id),
+            metadata_json={"updates": assignment_data.model_dump(exclude_unset=True)},
+        )
         return assignment
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
