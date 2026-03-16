@@ -1,8 +1,8 @@
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from src.api.rest.dependencies import DBSession
+from src.api.rest.dependencies import DBSession, require_roles
 from src.core.services.employee_services import (
     create_employee_service,
     delete_employee_service,
@@ -18,7 +18,11 @@ from src.schemas.employee_schemas import (
     EmployeeWithAssignStatusResponse,
 )
 
-employee_router = APIRouter(tags=["employee"], prefix="/employee")
+employee_router = APIRouter(
+    tags=["employee"],
+    prefix="/employee",
+    dependencies=[Depends(require_roles(["operation_executive", "auditor"]))],
+)
 
 
 @employee_router.get("/get-employees", response_model=list[EmployeeResponse])

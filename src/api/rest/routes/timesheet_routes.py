@@ -1,8 +1,8 @@
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
-from src.api.rest.dependencies import DBSession
+from src.api.rest.dependencies import DBSession, require_roles
 from src.constants.error_responses import COMMON_ERROR_RESPONSES
 from src.core.services.timesheet_service import (
     decide_timesheet_approval_service,
@@ -21,7 +21,11 @@ from src.schemas.display_schemas import ApprovalDecisionRequest
 from src.schemas.timesheet_schemas import TimeEntryRawResponse, TimesheetResponse
 from src.schemas.timesheet_update_schemas import TimesheetUpdate
 
-timesheet_router = APIRouter(tags=["timesheet"], prefix="/timesheet")
+timesheet_router = APIRouter(
+    tags=["timesheet"],
+    prefix="/timesheet",
+    dependencies=[Depends(require_roles(["operation_executive", "auditor"]))],
+)
 
 
 @timesheet_router.get(
