@@ -1,8 +1,8 @@
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from src.api.rest.dependencies import DBSession
+from src.api.rest.dependencies import DBSession, require_roles
 from src.core.services.email_whitelist_services import (
     create_whitelist_service,
     get_all_whitelist_service,
@@ -10,7 +10,11 @@ from src.core.services.email_whitelist_services import (
 )
 from src.schemas.email_schemas import EmailWhitelistCreate, EmailWhitelistResponse
 
-whitelist_router = APIRouter(tags=["Whitelist"], prefix="/whitelist")
+whitelist_router = APIRouter(
+    tags=["Whitelist"],
+    prefix="/whitelist",
+    dependencies=[Depends(require_roles(["operation_executive", "auditor"]))],
+)
 
 
 @whitelist_router.get("/get-all-whitelisted-emails")

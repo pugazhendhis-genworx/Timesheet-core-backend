@@ -1,13 +1,17 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
-from src.api.rest.dependencies import DBSession
+from src.api.rest.dependencies import DBSession, require_roles
 from src.constants.error_responses import COMMON_ERROR_RESPONSES
 from src.core.services.email_processing_service import (
     process_unprocessed_emails,
     reprocess_failed_emails,
 )
 
-email_process_router = APIRouter(tags=["email-processing"], prefix="/email-processing")
+email_process_router = APIRouter(
+    tags=["email-processing"],
+    prefix="/email-processing",
+    dependencies=[Depends(require_roles(["operation_executive", "auditor"]))],
+)
 
 
 @email_process_router.post("/process-all", responses=COMMON_ERROR_RESPONSES)

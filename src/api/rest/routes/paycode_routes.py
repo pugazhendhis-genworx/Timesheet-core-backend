@@ -1,13 +1,17 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from src.api.rest.dependencies import DBSession
+from src.api.rest.dependencies import DBSession, require_roles
 from src.core.services.paycode_service import (
     create_paycode_service,
     get_all_paycodes_service,
 )
 from src.schemas.paycode_schemas import PaycodeCreate, PaycodeResponse
 
-paycode_router = APIRouter(tags=["paycode"], prefix="/paycode")
+paycode_router = APIRouter(
+    tags=["paycode"],
+    prefix="/paycode",
+    dependencies=[Depends(require_roles(["operation_executive", "auditor"]))],
+)
 
 
 @paycode_router.get("/get-paycodes", response_model=list[PaycodeResponse])

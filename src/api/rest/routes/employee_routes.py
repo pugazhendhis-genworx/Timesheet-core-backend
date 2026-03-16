@@ -1,12 +1,13 @@
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from src.api.rest.dependencies import DBSession
+from src.api.rest.dependencies import DBSession, require_roles
 from src.core.services.employee_services import (
     create_employee_service,
     delete_employee_service,
     get_all_employees_service,
+    get_all_employees_with_assign_status,
     get_employee_by_id_service,
     update_employee_service,
 )
@@ -14,14 +15,27 @@ from src.schemas.employee_schemas import (
     EmployeeCreate,
     EmployeeResponse,
     EmployeeUpdate,
+    EmployeeWithAssignStatusResponse,
 )
 
-employee_router = APIRouter(tags=["employee"], prefix="/employee")
+employee_router = APIRouter(
+    tags=["employee"],
+    prefix="/employee",
+    dependencies=[Depends(require_roles(["operation_executive", "auditor"]))],
+)
 
 
 @employee_router.get("/get-employees", response_model=list[EmployeeResponse])
 async def get_employees(db: DBSession):
     return await get_all_employees_service(db)
+
+
+@employee_router.get(
+    "/get-employees-with-assign-status",
+    response_model=list[EmployeeWithAssignStatusResponse],
+)
+async def get_employees_with_assign_status(db: DBSession):
+    return await get_all_employees_with_assign_status(db)
 
 
 @employee_router.get("/{employee_id}", response_model=EmployeeResponse)

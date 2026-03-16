@@ -33,3 +33,7 @@ class EmployeeResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class EmployeeWithAssignStatusResponse(EmployeeResponse):
+    assigned: bool
