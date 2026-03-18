@@ -55,7 +55,10 @@ async def create_assignment_service(db, assignment_data: AssignmentCreate):
             action="CREATED",
             entity_type="ASSIGNMENT",
             entity_id=str(assignment.assignment_id),
-            metadata_json={"client_id": str(assignment.client_id), "employee_id": str(assignment.employee_id)},
+            metadata_json={
+                "client_id": str(assignment.client_id),
+                "employee_id": str(assignment.employee_id),
+            },
         )
         return assignment
     except Exception as e:
@@ -69,7 +72,7 @@ async def update_assignment_service(
         assignment = await update_assignment(db, assignment_id, assignment_data)
         if not assignment:
             raise HTTPException(status_code=404, detail=ASSIGNMENT_NOT_FOUND)
-        
+
         await create_audit_log(
             db,
             action="UPDATED",

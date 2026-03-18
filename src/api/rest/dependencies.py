@@ -1,4 +1,3 @@
-import os
 from typing import Annotated
 
 import httpx
@@ -6,6 +5,7 @@ from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.config.settings import settings
 from src.data.clients.database import async_session_maker
 
 
@@ -17,7 +17,7 @@ async def get_pg_session():
 DBSession = Annotated[AsyncSession, Depends(get_pg_session)]
 
 
-AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://auth_backend:8000")
+AUTH_SERVICE_URL = settings.AUTHBACKEND_URL
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{AUTH_SERVICE_URL}/auth/login")
 
 

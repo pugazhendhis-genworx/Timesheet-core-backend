@@ -5,7 +5,7 @@ from googleapiclient.discovery import build
 
 from .gmail_auth import authenticate
 
-HISTORY_FILE = "history.txt"
+HISTORY_FILE = "/tmp/history.txt"
 
 
 def get_service():
@@ -195,9 +195,9 @@ def save_attachments(message):
 
             data = base64.urlsafe_b64decode(attachment["data"])
 
-            os.makedirs("attachments", exist_ok=True)
+            file_path = f"/attachments/{part['filename']}"
 
-            with open(f"attachments/{part['filename']}", "wb") as f:
+            with open(file_path, "wb") as f:
                 f.write(data)
 
 

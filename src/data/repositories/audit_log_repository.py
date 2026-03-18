@@ -1,4 +1,4 @@
-from typing import Iterable
+from collections.abc import Iterable
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -36,4 +36,3 @@ async def create_audit_log(
     await db.commit()
     await db.refresh(log)
     return log
-

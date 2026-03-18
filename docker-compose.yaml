@@ -13,7 +13,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d TimeIQ"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d TimeIQ" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -24,13 +24,15 @@ services:
     container_name: auth_Backend
     env_file:
       - ../Time_IQ_Auth_backend/.env
+    environment:
+      - POSTGRES_DB_URL=postgresql+asyncpg://postgres:postgres@db:5432/TimeIQ
     depends_on:
       db:
         condition: service_healthy
     ports:
       - "8000:8000"
     restart: always
-  
+
   core_backend:
     build: ./
     container_name: TimeIQ_core_backend
@@ -81,10 +83,10 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - POSTGRES_DB_URL=postgresql+asyncpg://postgres:postgres@db:5432/TimeIQ
       - SYNC_POSTGRES_DB_URL=postgresql+psycopg2://postgres:postgres@db:5432/TimeIQ
-    volumes:
-      - .:/app
-      - ./token.json:/app/token.json
-      - ./credentials.json:/app/credentials.json
+    # volumes:
+    #   # - .:/app
+    #   # - ./token.json:/app/token.json
+    #   # - ./credentials.json:/app/credentials.json
     depends_on:
       - redis
     restart: unless-stopped
@@ -101,10 +103,9 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - POSTGRES_DB_URL=postgresql+asyncpg://postgres:postgres@db:5432/TimeIQ
       - SYNC_POSTGRES_DB_URL=postgresql+psycopg2://postgres:postgres@db:5432/TimeIQ
-    volumes:
-      - .:/app
-      - ./token.json:/app/token.json
-      - ./credentials.json:/app/credentials.json
+      # - .:/app  
+      # - ./token.json:/app/token.json
+      # - ./credentials.json:/app/credentials.json
     depends_on:
       - redis
     restart: unless-stopped
@@ -121,10 +122,10 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - POSTGRES_DB_URL=postgresql+asyncpg://postgres:postgres@db:5432/TimeIQ
       - SYNC_POSTGRES_DB_URL=postgresql+psycopg2://postgres:postgres@db:5432/TimeIQ
-    volumes:
-      - .:/app
-      - ./token.json:/app/token.json
-      - ./credentials.json:/app/credentials.json
+    # volumes:
+    #   # - .:/app
+    #   # - ./token.json:/app/token.json
+    #   # - ./credentials.json:/app/credentials.json
     depends_on:
       - redis
     restart: unless-stopped
