@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     LANGFUSE_SECRET_KEY: str
     LANGFUSE_PUBLIC_KEY: str
     LANGFUSE_BASE_URL: str
+    TOKEN_FILE: str
+    CREDENTIALS_FILE: str
 
     class Config:
         env_file = ".env"
