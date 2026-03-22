@@ -12,3 +12,8 @@ class Paycode(Base):
     paycode_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     paycode = Column(String(50), unique=True)
     paycode_name = Column(String(150))
+
+    @property
+    def code(self):
+        """Alias for paycode attribute for backward compatibility."""
+        return self.paycode

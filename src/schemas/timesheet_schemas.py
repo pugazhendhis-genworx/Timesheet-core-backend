@@ -33,6 +33,10 @@ class TimeEntryRawResponse(BaseModel):
     overtime_hours: Decimal
     double_time_hours: Decimal
     paycode_id: UUID | None = None
+    matching_status: str | None = None
+    employee_unmatched_reason: str | None = None
+    client_unmatched_reason: str | None = None
+    match_confidence: Decimal | None = None
 
     class Config:
         from_attributes = True

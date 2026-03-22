@@ -1,8 +1,8 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
-from src.api.rest.dependencies import DBSession, require_roles
+from src.api.rest.dependencies import DBSession
 from src.core.services.assignment_services import (
     create_assignment_service,
     delete_assignment_service,
@@ -21,7 +21,6 @@ from src.schemas.assignment_schemas import (
 assignment_router = APIRouter(
     tags=["assignment"],
     prefix="/assignment",
-    dependencies=[Depends(require_roles(["operation_executive", "auditor"]))],
 )
 
 

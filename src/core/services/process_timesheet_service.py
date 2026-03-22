@@ -4,6 +4,7 @@ from src.core.services.employee_matching_service import (
     match_employees_for_timesheet,
     validate_client_for_timesheet,
 )
+from src.core.services.rule_engine_service import apply_client_rules
 from src.core.services.timesheet_service import (
     create_timesheet_from_extraction,
 )
@@ -45,6 +46,10 @@ async def process_timesheet(email, output, db):
         db=db,
         timesheet_id=timesheet.timesheet_id,
         raw_extraction=timesheet_data,
+    )
+
+    await apply_client_rules(
+        db=db, timesheet_id=timesheet.timesheet_id, client_id=UUID(client_id)
     )
 
     email.processed_status = "COMPLETED"

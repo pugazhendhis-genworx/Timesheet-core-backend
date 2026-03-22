@@ -246,16 +246,7 @@ Rules for hour calculation:
     when a Total value is NOT provided.
     3. Break time should only be used if the document does not already
     provide the final Total hours.
-    4. If Total hours exist, use them directly as regular_hours.
-    5. Never subtract break hours from Total if Total already exists.
-    Example:
-        Input:
-            In: 09:00 AM
-            Out: 06:00 PM
-            Break: 1h
-            Total: 8h
-        Output:
-            regular_hours = 8
+    4. Provide the final calculated amount as total_hours. DO NOT apply overtime rules.
 - Return JSON only
 
 {{
@@ -267,9 +258,7 @@ Rules for hour calculation:
 "date":"",
 "start_time":"",
 "end_time":"",
-"regular_hours":0,
-"overtime_hours":0,
-"double_time_hours":0,
+"total_hours":0,
 "paycode":""
 }}
 ]

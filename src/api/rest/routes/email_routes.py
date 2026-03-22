@@ -1,8 +1,8 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Query
 
-from src.api.rest.dependencies import DBSession, require_roles
+from src.api.rest.dependencies import DBSession
 from src.core.services.email_services import get_all_emails_service
 from src.core.services.gmail_service import (
     fetch_new_emails,
@@ -14,7 +14,6 @@ from src.schemas.email_schemas import EmailMessageResponse
 
 email_router = APIRouter(
     tags=["email"],
-    dependencies=[Depends(require_roles(["operation_executive", "auditor"]))],
 )
 
 

@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 from uuid import UUID
 
+from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -80,9 +81,9 @@ async def create_timesheet_from_extraction(
             client_id=client_id,
             start_time=start_time,
             end_time=end_time,
-            regular_hours=entry_data.get("regular_hours", 0),
-            overtime_hours=entry_data.get("overtime_hours", 0),
-            double_time_hours=entry_data.get("double_time_hours", 0),
+            regular_hours=entry_data.get("total_hours", 0),
+            overtime_hours=0,
+            double_time_hours=0,
             paycode_id=paycode_id,
         )
         await create_time_entry(db, time_entry)
@@ -157,8 +158,6 @@ async def submit_for_approval_service(db: AsyncSession, timesheet_id: UUID):
     Move a timesheet to READY_FOR_APPROVAL.
     Only timesheets that have been extracted/matched can be submitted.
     """
-    from fastapi import HTTPException
-
     timesheet = await get_timesheet_by_id(db, timesheet_id)
     if not timesheet:
         raise HTTPException(status_code=404, detail="Timesheet not found")

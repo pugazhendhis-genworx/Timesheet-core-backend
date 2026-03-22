@@ -8,13 +8,17 @@ from src.api.rest.routes.assignment_routes import assignment_router
 from src.api.rest.routes.attachment_routes import attachment_router
 from src.api.rest.routes.audit_log_routes import audit_log_router
 from src.api.rest.routes.client_routes import client_router
+from src.api.rest.routes.client_rules_routes import rule_router
 from src.api.rest.routes.email_processing_routes import email_process_router
 from src.api.rest.routes.email_routes import email_router
 from src.api.rest.routes.email_whitelist_routes import whitelist_router
 from src.api.rest.routes.employee_routes import employee_router
 from src.api.rest.routes.health_routes import health_router
+from src.api.rest.routes.holiday_routes import holiday_router
 from src.api.rest.routes.manual_review_routes import review_router
 from src.api.rest.routes.paycode_routes import paycode_router
+from src.api.rest.routes.payroll_routes import payroll_router
+from src.api.rest.routes.rule_violation_routes import rule_violation_router
 from src.api.rest.routes.timesheet_routes import timesheet_router
 from src.data.clients.database import Base, engine
 from src.data.models.postgres.assignment_model import Assignment  # noqa
@@ -60,6 +64,10 @@ def create_app() -> FastAPI:
     app.include_router(approval_router)
     app.include_router(audit_log_router)
     app.include_router(attachment_router)
+    app.include_router(payroll_router)
+    app.include_router(holiday_router)
+    app.include_router(rule_router)
+    app.include_router(rule_violation_router)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
