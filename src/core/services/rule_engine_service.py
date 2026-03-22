@@ -88,10 +88,11 @@ async def apply_client_rules(
         invalid_entries = [e for e in emp_entries if not (e.start_time and e.end_time)]
 
         logger.info(
-            f"Valid entries: {len(valid_entries)}, Invalid entries: {len(invalid_entries)}"
+            f"Valid entries: {len(valid_entries)}, Invalid entries:"
+            "{len(invalid_entries)}"
         )
 
-        for entry in invalid_entries:
+        for entry in invalid_entries:  # noqa
             logger.warning("Missing time fields for entry")
             violations.append(
                 RuleViolation(
@@ -113,7 +114,8 @@ async def apply_client_rules(
             paycode = entry.paycode.paycode if entry.paycode else ""
 
             logger.info(
-                f"Entry -> Date: {entry_date}, Paycode: {paycode}, Holiday: {is_holiday}"
+                f"Entry -> Date: {entry_date}, Paycode: {paycode},"
+                "Holiday: {is_holiday}"
             )
 
             # --- VALIDATION ---
