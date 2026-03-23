@@ -1,10 +1,12 @@
-from typing import Sequence
+from collections.abc import Sequence
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from src.data.models.postgres.client_rule_model import RuleViolation
+from src.data.models.postgres.timesheet_model import Timesheet
 
 
 async def get_rule_violations_by_timesheet_id_repo(
@@ -22,11 +24,9 @@ async def get_timesheets_with_violations_repo(db: AsyncSession) -> Sequence[UUID
 
 
 async def get_flagged_timesheets_summary_repo(db: AsyncSession):
-    from sqlalchemy.orm import joinedload
-    from src.data.models.postgres.timesheet_model import Timesheet
 
     subq = select(RuleViolation.timesheet_id).distinct().subquery()
-    
+
     stmt = (
         select(Timesheet)
         .options(joinedload(Timesheet.email_message))

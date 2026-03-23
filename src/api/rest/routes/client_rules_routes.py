@@ -1,8 +1,8 @@
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from src.api.rest.dependencies import DBSession
+from src.api.rest.dependencies import DBSession, require_roles
 from src.core.services.client_rule_services import (
     create_client_rule_service,
     get_client_rules_service,
@@ -17,6 +17,7 @@ from src.schemas.client_rule_schemas import (
 rule_router = APIRouter(
     tags=["rule"],
     prefix="/rule",
+    dependencies=[Depends(require_roles(["operation_executive", "auditor"]))],
 )
 
 

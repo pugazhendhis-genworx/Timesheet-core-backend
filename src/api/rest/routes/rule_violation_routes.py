@@ -1,8 +1,8 @@
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
-from src.api.rest.dependencies import DBSession
+from src.api.rest.dependencies import DBSession, require_roles
 from src.core.services.rule_violation_service import (
     get_flagged_timesheet_summary_service,
     get_flagged_timesheets_list_service,
@@ -15,12 +15,17 @@ from src.schemas.rule_violation_schemas import (
 )
 from src.schemas.timesheet_schemas import TimeEntryRawResponse, TimesheetResponse
 
-rule_violation_router = APIRouter(tags=["rule_violations"], prefix="/rule_violations")
+rule_violation_router = APIRouter(
+    tags=["rule_violations"],
+    prefix="/rule_violations",
+    dependencies=[Depends(require_roles(["operation_executive", "auditor"]))],
+)
 
 
 @rule_violation_router.get("/", response_model=FlaggedTimesheetListEnvelope)
 async def get_all_flagged_timesheets(db: DBSession):
-    """Returns a list of timesheets that possess rule violations with frontend metadata."""
+    """Returns a list of timesheets that possess
+    rule violations with frontend metadata."""
     summaries = await get_flagged_timesheets_list_service(db)
     return FlaggedTimesheetListEnvelope(
         data=[FlaggedTimesheetSummaryResponse.model_validate(s) for s in summaries]

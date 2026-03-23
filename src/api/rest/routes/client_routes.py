@@ -1,12 +1,13 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from src.api.rest.dependencies import DBSession
+from src.api.rest.dependencies import DBSession, require_roles
 from src.core.services.client_services import create_client_service, get_clients_service
 from src.schemas.client_schemas import ClientCreate, ClientResponse
 
 client_router = APIRouter(
     tags=["client"],
     prefix="/client",
+    dependencies=[Depends(require_roles(["operation_executive", "auditor"]))],
 )
 
 

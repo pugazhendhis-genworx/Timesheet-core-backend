@@ -1,8 +1,8 @@
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
-from src.api.rest.dependencies import DBSession
+from src.api.rest.dependencies import DBSession, require_roles
 from src.core.services.payroll_service import (
     get_all_payroll_ready_service,
     get_payroll_ready_by_id_service,
@@ -16,7 +16,11 @@ from src.schemas.payroll_schemas import (
 )
 from src.schemas.rule_violation_schemas import RuleViolationItemResponse
 
-payroll_router = APIRouter(tags=["payroll_ready"], prefix="/payroll_ready")
+payroll_router = APIRouter(
+    tags=["payroll_ready"],
+    prefix="/payroll_ready",
+    dependencies=[Depends(require_roles(["operation_executive", "auditor"]))],
+)
 
 
 @payroll_router.get("/", response_model=PayrollReadyListEnvelope)

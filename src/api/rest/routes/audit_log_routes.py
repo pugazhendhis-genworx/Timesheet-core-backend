@@ -1,10 +1,14 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from src.api.rest.dependencies import DBSession
+from src.api.rest.dependencies import DBSession, require_roles
 from src.data.repositories.audit_log_repository import get_audit_logs
 from src.schemas.audit_log_schemas import AuditLogResponse
 
-audit_log_router = APIRouter(tags=["audit-log"], prefix="/audit-log")
+audit_log_router = APIRouter(
+    tags=["audit-log"],
+    prefix="/audit-log",
+    dependencies=[Depends(require_roles(["operation_executive", "auditor"]))],
+)
 
 
 @audit_log_router.get("/", response_model=list[AuditLogResponse])

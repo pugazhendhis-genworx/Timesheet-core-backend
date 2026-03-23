@@ -35,3 +35,7 @@ async def update_entry_employee(
     entry.employee_id = employee_id
     await db.flush()
     return entry
+
+
+async def fetch_time_sheet_entry_for_rule_violations():
+    pass

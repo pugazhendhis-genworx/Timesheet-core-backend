@@ -1,6 +1,5 @@
 from datetime import date
 from decimal import Decimal
-from typing import Dict, List, Sequence
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,19 +22,21 @@ async def create_payroll_records_for_timesheet(
     timesheet_id: UUID,
     client_id: UUID,
     rule_config: dict,
-    entries_by_emp: Dict[UUID, List[TimeEntryRaw]],
+    entries_by_emp: dict[UUID, list[TimeEntryRaw]],
     week_ending: date | None,
 ) -> None:
     payroll_entries = []
 
-    # Map raw rates strictly mapping fields without arithmetic modifications to pay bounds.
+    """ Map raw rates strictly mapping fields without arithmetic modifications
+    to pay bounds """
+
     reg_markup_rate = rule_config.get("reg_markup_rate", 1.0)
     ot_markup_rate = rule_config.get("ot_markup_rate", 1.5)
     dt_markup_rate = rule_config.get("dt_markup_rate", 2.0)
 
     reg_pay_config = rule_config.get("reg_pay", 0)
     ot_pay_config = rule_config.get("ot_pay", 0)
-    dt_pay_config = rule_config.get("dt_pay", 0)
+    dt_pay_config = rule_config.get("dt_pay", 0)  # noqa
     holiday_pay_config = rule_config.get("holiday_pay", 0)
 
     for emp_id, emp_entries in entries_by_emp.items():

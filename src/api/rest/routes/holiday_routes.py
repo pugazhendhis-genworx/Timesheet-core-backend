@@ -1,8 +1,8 @@
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
-from src.api.rest.dependencies import DBSession
+from src.api.rest.dependencies import DBSession, require_roles
 from src.core.services.holiday_service import (
     add_holiday,
     delete_holiday_service,
@@ -14,7 +14,7 @@ from src.schemas.holiday_schemas import HolidayCreate, HolidayResponse, HolidayU
 holiday_router = APIRouter(
     tags=["holiday"],
     prefix="/holiday",
-    # dependencies=[Depends(require_roles(["operation_executive", "auditor"]))],
+    dependencies=[Depends(require_roles(["operation_executive", "auditor"]))],
 )
 
 
