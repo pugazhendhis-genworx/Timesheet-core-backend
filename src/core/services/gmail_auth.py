@@ -25,4 +25,3 @@ def authenticate():
         )
 
     return creds
-    return creds

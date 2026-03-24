@@ -21,6 +21,7 @@ async def process_unprocessed_emails(db: AsyncSession):
     2. If TIMESHEET: create timesheet, match employees, create review
     3. If OTHER: mark as COMPLETED
     """
+    logger.info("Starting bulk email processing")
 
     try:
         emails = await get_email_message_ingested(db)
@@ -28,19 +29,27 @@ async def process_unprocessed_emails(db: AsyncSession):
         failed = []
 
         for email in emails:
+            logger.info(f"Processing email_id={email.email_message_id}")
             try:
                 # ── Step 1: Mark as CLASSIFYING ──
                 email.processed_status = "CLASSIFYING"
                 email.last_error = None
                 await db.flush()
+                logger.debug(f"Email {email.email_message_id} marked as CLASSIFYING")
 
                 # ── Step 2: Run LangGraph ──
                 output = await email_processing_graph.ainvoke(
                     {"email_id": str(email.email_message_id), "db": db}
                 )
-
+                logger.debug(
+                    f"LangGraph output received for email_id={email.email_message_id}"
+                )
                 # Check for agent errors
                 if output.get("error"):
+                    logger.warning(
+                        f"""LangGraph returned error for
+                          email_id={email.email_message_id}: {output["error"]}"""
+                    )
                     raise RuntimeError(output["error"])
 
                 classification = output.get("classification", "OTHER")
@@ -48,11 +57,22 @@ async def process_unprocessed_emails(db: AsyncSession):
 
                 # ──  Handle non-timesheet ──
                 if classification != "TIMESHEET":
+                    logger.info(
+                        f"""Handling non-timesheet email_id={email.email_message_id},
+                          type={classification}"""
+                    )
                     await _handle_non_timesheet(email, classification, processed, db)
                     continue
 
                 # ----Handle timesheet ---
+                logger.info(
+                    f"Processing timesheet for email_id={email.email_message_id}"
+                )
                 timesheet = await process_timesheet(email, output, db)
+                logger.info(
+                    f"""Timesheet created: email_id={email.email_message_id},
+                    timesheet_id={timesheet.timesheet_id}"""
+                )
 
                 processed.append(
                     {
@@ -97,10 +117,13 @@ async def reprocess_failed_emails(db: AsyncSession):
     Reset all FAILED emails to INGESTED and re-run the full pipeline.
     Returns same structure as process_unprocessed_emails.
     """
+    logger.info("Starting reprocessing of failed emails")
+
     try:
         failed_emails = await get_failed_processed_emails(db)
 
         if not failed_emails:
+            logger.info("No failed emails found to reprocess")
             return {
                 "processed_count": 0,
                 "failed_count": 0,
@@ -109,13 +132,19 @@ async def reprocess_failed_emails(db: AsyncSession):
                 "message": "No failed emails found to reprocess",
             }
 
-        # Reset to INGESTED so process_unprocessed_emails picks them up
+        logger.info(f"Resetting {len(failed_emails)} failed emails to INGESTED")
+
+        # Reset to INGESTED
         for email in failed_emails:
             email.processed_status = "INGESTED"
             email.last_error = None
+
         await db.flush()
 
-        logger.info("Reprocessing %d failed emails", len(failed_emails))
+        logger.info("Re-triggering processing pipeline for failed emails")
+
         return await process_unprocessed_emails(db)
+
     except Exception as e:
+        logger.error("Error during reprocessing failed emails", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e)) from e

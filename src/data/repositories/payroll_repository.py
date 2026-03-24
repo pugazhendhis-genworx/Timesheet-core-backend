@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.data.models.postgres.payroll_model import PayrollReadyEntry
@@ -39,3 +39,14 @@ async def get_all_payroll_ready_repo(db: AsyncSession) -> Sequence[PayrollReadyE
     stmt = select(PayrollReadyEntry).filter(PayrollReadyEntry.approval_status)
     result = await db.execute(stmt)
     return result.scalars().all()
+
+
+async def update_payroll_approval_status(
+    db: AsyncSession, timesheet_id: UUID, status: bool
+):
+    await db.execute(
+        update(PayrollReadyEntry)
+        .where(PayrollReadyEntry.timesheet_id == timesheet_id)
+        .values(approval_status=status)
+    )
+    await db.commit()

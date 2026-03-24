@@ -1,13 +1,13 @@
 from uuid import UUID
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.data.models.postgres.timesheet_model import TimeEntryRaw, Timesheet
 from src.data.repositories.rule_violation_repository import (
     get_flagged_timesheets_summary_with_latest_violation_repo,
     get_rule_violations_by_timesheet_id_repo,
 )
+from src.data.repositories.time_entry_repository import get_entries_by_timesheet_id
+from src.data.repositories.timesheet_repository import get_timesheet_by_id
 
 
 async def get_flagged_timesheets_list_service(db: AsyncSession):
@@ -39,17 +39,13 @@ async def get_flagged_timesheet_summary_service(db: AsyncSession, timesheet_id: 
     violations = await get_rule_violations_by_timesheet_id_repo(db, timesheet_id)
 
     # Fetch parent timesheet metadata
-    stmt_ts = select(Timesheet).where(Timesheet.timesheet_id == timesheet_id)
-    result_ts = await db.execute(stmt_ts)
-    timesheet = result_ts.scalar_one_or_none()
+    timesheet = get_timesheet_by_id(db, timesheet_id)
 
     if not timesheet:
         return None
 
     # Fetch corresponding raw boundaries prior to engine sync
-    stmt_entries = select(TimeEntryRaw).where(TimeEntryRaw.timesheet_id == timesheet_id)
-    result_entries = await db.execute(stmt_entries)
-    entries = result_entries.scalars().all()
+    entries = await get_entries_by_timesheet_id(db, timesheet_id)
 
     return {
         "status": "FLAGGED_WITH_VIOLATIONS" if violations else "CLEAN",

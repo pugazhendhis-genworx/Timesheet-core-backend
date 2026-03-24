@@ -3,11 +3,8 @@ from datetime import datetime
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
 
-from src.data.models.postgres.payroll_model import PayrollReadyEntry
 from src.data.models.postgres.review_model import ManualReview
 from src.data.models.postgres.timesheet_model import TimeEntryRaw, Timesheet
 from src.data.repositories.audit_log_repository import create_audit_log
@@ -16,6 +13,7 @@ from src.data.repositories.manual_review_repository import (
     get_reviews_by_timesheet_id,
 )
 from src.data.repositories.paycode_repository import get_paycode_by_code
+from src.data.repositories.payroll_repository import update_payroll_approval_status
 from src.data.repositories.time_entry_repository import (
     create_time_entry,
     get_entries_by_timesheet_id,
@@ -26,6 +24,9 @@ from src.data.repositories.timesheet_repository import (
     get_timesheet_by_id,
     get_timesheets_by_client_id,
     get_timesheets_by_status,
+    get_timesheets_with_full_context,
+    get_timesheets_with_full_context_by_id,
+    get_timesheets_with_full_context_by_status,
     update_timesheet_status,
 )
 from src.schemas.timesheet_update_schemas import TimesheetUpdate
@@ -210,37 +211,14 @@ async def get_extracted_timesheets_for_display(db: AsyncSession) -> list[dict]:
     Get all extracted timesheets with full context for auditor/admin review.
     Includes employee names, client names, email sender, timestamp.
     """
-    stmt = (
-        select(Timesheet)
-        .options(
-            joinedload(Timesheet.email_message),
-            joinedload(Timesheet.client),
-            joinedload(Timesheet.entries).joinedload(TimeEntryRaw.employee),
-            joinedload(Timesheet.entries).joinedload(TimeEntryRaw.paycode),
-        )
-        .where(Timesheet.extraction_status == "EXTRACTED")
-    )
-    result = await db.execute(stmt)
-    timesheets = result.unique().scalars().all()
+    timesheets = await get_timesheets_with_full_context(db)
     return _build_extracted_display_list(timesheets)
 
 
 async def get_extracted_timesheet_by_id_for_display(
     db: AsyncSession, timesheet_id: UUID
 ) -> dict | None:
-    """Get a single extracted timesheet with full display context."""
-    stmt = (
-        select(Timesheet)
-        .options(
-            joinedload(Timesheet.email_message),
-            joinedload(Timesheet.client),
-            joinedload(Timesheet.entries).joinedload(TimeEntryRaw.employee),
-            joinedload(Timesheet.entries).joinedload(TimeEntryRaw.paycode),
-        )
-        .where(Timesheet.timesheet_id == timesheet_id)
-    )
-    result = await db.execute(stmt)
-    timesheet = result.unique().scalar_one_or_none()
+    timesheet = await get_timesheets_with_full_context_by_id(db, timesheet_id)
     if not timesheet:
         return None
     return _build_extracted_display(timesheet)
@@ -258,7 +236,6 @@ async def decide_timesheet_approval_service(
     comment: Optional reviewer comment
     Returns: Updated timesheet display dict
     """
-    from fastapi import HTTPException
 
     if decision not in ("APPROVED", "REJECTED"):
         raise HTTPException(
@@ -287,17 +264,9 @@ async def decide_timesheet_approval_service(
     for review in reviews:
         review.status = decision
 
-    print("\n\n\n" + decision)
     if decision == "APPROVED":
-        print("Updating\n\n\n")
-        await db.execute(
-            update(PayrollReadyEntry)
-            .where(PayrollReadyEntry.timesheet_id == timesheet_id)
-            .values(approval_status=True)
-        )
-        await db.commit()
+        await update_payroll_approval_status(db, True)
 
-    await db.commit()
     await db.refresh(timesheet)
 
     logger.info(
@@ -330,18 +299,7 @@ async def get_payroll_ready_timesheets(
     if not status_filter:
         status_filter = "APPROVED"
 
-    stmt = (
-        select(Timesheet)
-        .options(
-            joinedload(Timesheet.email_message),
-            joinedload(Timesheet.client),
-            joinedload(Timesheet.entries).joinedload(TimeEntryRaw.employee),
-            joinedload(Timesheet.entries).joinedload(TimeEntryRaw.paycode),
-        )
-        .where(Timesheet.status == status_filter)
-    )
-    result = await db.execute(stmt)
-    timesheets = result.unique().scalars().all()
+    timesheets = await get_timesheets_with_full_context_by_status(db, status_filter)
 
     payroll_timesheets = []
     for ts in timesheets:
