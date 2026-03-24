@@ -24,6 +24,8 @@ class FlaggedTimesheetSummaryResponse(BaseModel):
     status: str
     email: str
     source: str | None = None
+    latest_violation_created_at: datetime | None = None
+    email_received_at: datetime | None = None
 
 
 class FlaggedTimesheetListEnvelope(BaseModel):

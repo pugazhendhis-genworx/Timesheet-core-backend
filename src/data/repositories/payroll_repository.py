@@ -36,6 +36,6 @@ async def get_payroll_ready_by_id_repo(
 
 
 async def get_all_payroll_ready_repo(db: AsyncSession) -> Sequence[PayrollReadyEntry]:
-    stmt = select(PayrollReadyEntry)
+    stmt = select(PayrollReadyEntry).filter(PayrollReadyEntry.approval_status)
     result = await db.execute(stmt)
     return result.scalars().all()

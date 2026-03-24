@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 from uuid import UUID
 
@@ -14,7 +14,7 @@ class PayrollReadyEntryResponse(BaseModel):
     export_id: UUID | None = None
     timesheet_id: UUID
     client_id: UUID
-    employee_id: UUID
+    employee_id: UUID | None = None
     week_ending: date | None = None
     regular_hours: Decimal
     overtime_hours: Decimal

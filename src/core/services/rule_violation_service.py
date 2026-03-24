@@ -5,16 +5,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.data.models.postgres.timesheet_model import TimeEntryRaw, Timesheet
 from src.data.repositories.rule_violation_repository import (
-    get_flagged_timesheets_summary_repo,
+    get_flagged_timesheets_summary_with_latest_violation_repo,
     get_rule_violations_by_timesheet_id_repo,
 )
 
 
 async def get_flagged_timesheets_list_service(db: AsyncSession):
-    timesheets = await get_flagged_timesheets_summary_repo(db)
+    rows = await get_flagged_timesheets_summary_with_latest_violation_repo(db)
     summary_list = []
 
-    for ts in timesheets:
+    for ts, latest_created_at in rows:
         summary_list.append(
             {
                 "timesheet_id": ts.timesheet_id,
@@ -24,6 +24,10 @@ async def get_flagged_timesheets_list_service(db: AsyncSession):
                 if ts.email_message
                 else "Unknown",
                 "source": ts.source,
+                "latest_violation_created_at": latest_created_at,
+                "email_received_at": ts.email_message.received_at
+                if ts.email_message
+                else None,
             }
         )
 

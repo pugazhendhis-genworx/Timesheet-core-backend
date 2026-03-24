@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, Date, DateTime, Numeric, Text
+from sqlalchemy import Boolean, Column, Date, DateTime, Numeric, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import ForeignKey
@@ -40,6 +40,7 @@ class PayrollReadyEntry(Base):
     reg_pay = Column(Numeric)
     ot_pay = Column(Numeric)
     holiday_pay = Column(Numeric)
+    approval_status = Column(Boolean, default=False)
 
     export = relationship("PayrollExport")
     client = relationship("Client")

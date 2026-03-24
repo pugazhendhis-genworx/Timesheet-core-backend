@@ -9,8 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from src.core.services.holiday_service import get_client_holidays_map
+from src.core.services.payroll_service import (
+    create_payroll_records_for_timesheet,
+)
 from src.data.models.postgres.client_rule_model import RuleViolation
-from src.data.models.postgres.timesheet_model import TimeEntryRaw
+from src.data.models.postgres.timesheet_model import TimeEntryRaw, Timesheet
 from src.data.repositories.client_rule_repository import (
     get_client_rules_by_client_id_repo,
 )
@@ -249,8 +252,6 @@ async def apply_client_rules(
         else:
             logger.info("No violations, proceeding to payroll")
 
-            from src.data.models.postgres.timesheet_model import Timesheet
-
             stmt_ts = select(Timesheet.week_ending).where(
                 Timesheet.timesheet_id == timesheet_id
             )
@@ -260,10 +261,6 @@ async def apply_client_rules(
             logger.info(f"Week ending: {week_ending}")
 
             if rule_config is not None:
-                from src.core.services.payroll_service import (
-                    create_payroll_records_for_timesheet,
-                )
-
                 logger.info("Creating payroll records")
 
                 await create_payroll_records_for_timesheet(

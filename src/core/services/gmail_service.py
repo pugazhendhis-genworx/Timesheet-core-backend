@@ -207,3 +207,11 @@ def mark_as_read(message_id):
     service.users().messages().modify(
         userId="me", id=message_id, body={"removeLabelIds": ["UNREAD"]}
     ).execute()
+
+
+def mark_as_unread(message_id):
+    service = get_service()
+
+    service.users().messages().modify(
+        userId="me", id=message_id, body={"addLabelIds": ["UNREAD"]}
+    ).execute()

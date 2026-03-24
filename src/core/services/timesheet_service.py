@@ -3,10 +3,11 @@ from datetime import datetime
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from src.data.models.postgres.payroll_model import PayrollReadyEntry
 from src.data.models.postgres.review_model import ManualReview
 from src.data.models.postgres.timesheet_model import TimeEntryRaw, Timesheet
 from src.data.repositories.audit_log_repository import create_audit_log
@@ -285,6 +286,16 @@ async def decide_timesheet_approval_service(
     reviews = await get_reviews_by_timesheet_id(db, timesheet_id)
     for review in reviews:
         review.status = decision
+
+    print("\n\n\n" + decision)
+    if decision == "APPROVED":
+        print("Updating\n\n\n")
+        await db.execute(
+            update(PayrollReadyEntry)
+            .where(PayrollReadyEntry.timesheet_id == timesheet_id)
+            .values(approval_status=True)
+        )
+        await db.commit()
 
     await db.commit()
     await db.refresh(timesheet)

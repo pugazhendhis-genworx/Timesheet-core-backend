@@ -10,6 +10,11 @@ from langfuse import observe
 from sqlalchemy import select
 
 from src.config.settings import settings
+from src.control.agents.prompts.prompts import (
+    build_extract_attachments_prompt,
+    build_extract_timesheet_structure,
+    build_timesheet_classification_prompt,
+)
 from src.control.agents.utils.attachment_utils import (
     detect_attachment_type,
     parse_excel_timesheet,
@@ -109,36 +114,7 @@ async def extract_attachment_text(state):
             # ------------------------
 
             elif file_type in ["pdf", "image"]:
-                prompt = """
-Extract all readable text from the provided timesheet document image, including printed
- and handwritten content.
-
-Rules:
-
-Read all visible elements available like:
-
-Employee name,Employee_email,Client_name,Dates,In/Start time,Out/End time,Break time,
- Total hours, Job codes or
-task descriptions, Supervisor notes/signatures, Handwritten corrections,
-Interpret handwritten text carefully.
-If unclear, provide the best guess.
-
-Extract time values exactly (e.g., 8:00, 08:30 AM, 17:45, 8.5, 8h 30m).
-
-Preserve the table structure where possible.
-
-Format rows like:
-
-Date: DD/MM/YYYY | In: HH:MM | Out: HH:MM | Break: XX | Total: XX
-
-If text cannot be read, write:
-
-[unreadable]
-
-Follow natural reading order (top → bottom, left → right).
-
-Output only the extracted text. No explanations.
-"""
+                prompt = build_extract_attachments_prompt()
 
                 async with await anyio.open_file(att.file_path, "rb") as f:
                     file_bytes = await f.read()
@@ -177,22 +153,11 @@ Output only the extracted text. No explanations.
 async def classify_email(state):
 
     try:
-        prompt = f"""
-Determine whether this email contains a timesheet details.
-
-Return ONLY JSON.
-
-{{"is_timesheet": true/false}}
-
-EMAIL BODY:
-{state.get("email_body")}
-
-EMAIL SUBJECT:
-{state.get("email_subject")}
-
-ATTACHMENTS CONTENT:
-{state.get("attachment_text")}
-"""
+        prompt = build_timesheet_classification_prompt(
+            state.get("email_body"),
+            state.get("email_subject"),
+            state.get("attachment_text"),
+        )
 
         response = groq_client.chat.completions.create(
             model="llama-3.3-70b-versatile",
@@ -230,49 +195,11 @@ ATTACHMENTS CONTENT:
 async def extract_timesheet(state):
 
     try:
-        prompt = f"""
-Extract structured timesheet information.
-
-Return JSON ONLY. Do not include any text outside the JSON block.
-Rules:
-- Normalize date as YYYY-MM-DD
-- Normalize time as HH:MM
-- If hours are given without times infer start/end
-Rules for hour calculation:
-    1. If a "Total" or "Total Hours" value is present in the document,
-    treat it as the FINAL worked hours. Do NOT subtract breaks again.
-    2. Only calculate hours using:
-    (End Time - Start Time - Break)
-    when a Total value is NOT provided.
-    3. Break time should only be used if the document does not already
-    provide the final Total hours.
-    4. Provide the final calculated amount as total_hours. DO NOT apply overtime rules.
-- Return JSON only
-
-{{
-"week_ending":"",
-"entries":[
-{{
-"employee_name":"",
-"employee_email":"",
-"date":"",
-"start_time":"",
-"end_time":"",
-"total_hours":0,
-"paycode":""
-}}
-]
-}}
-
-EMAIL BODY:
-{state.get("email_body")}
-
-EMAIL SUBJECT:
-{state.get("email_subject")}
-
-ATTACHMENTS TEXT:
-{state.get("attachment_text")}
-"""
+        prompt = build_extract_timesheet_structure(
+            state.get("email_body"),
+            state.get("email_subject"),
+            state.get("attachment_text"),
+        )
 
         response = groq_client.chat.completions.create(
             model="llama-3.3-70b-versatile",
