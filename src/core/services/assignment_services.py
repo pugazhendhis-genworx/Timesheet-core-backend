@@ -1,8 +1,10 @@
 from uuid import UUID
 
 from fastapi import HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.constants.error_constants import ASSIGNMENT_NOT_FOUND
+from src.data.models.postgres.assignment_model import Assignment
 from src.data.repositories.assignment_repository import (
     create_assignment,
     delete_assignment,
@@ -19,7 +21,7 @@ from src.schemas.assignment_schemas import AssignmentCreate, AssignmentUpdate
 logger = get_logger(__name__)
 
 
-async def get_all_assignments_service(db):
+async def get_all_assignments_service(db: AsyncSession):
     logger.info("Fetching all assignments")
     try:
         assignments = await get_all_assignments(db)
@@ -30,7 +32,9 @@ async def get_all_assignments_service(db):
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-async def get_assignment_by_id_service(db, assignment_id: UUID):
+async def get_assignment_by_id_service(
+    db: AsyncSession, assignment_id: UUID
+) -> Assignment:
     try:
         logger.info(f"Fetching assignment with id={assignment_id}")
         assignment = await get_assignment_by_id(db, assignment_id)
@@ -44,7 +48,7 @@ async def get_assignment_by_id_service(db, assignment_id: UUID):
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-async def get_assignments_by_employee_service(db, employee_id: UUID):
+async def get_assignments_by_employee_service(db: AsyncSession, employee_id: UUID):
     logger.info(f"Fetching assignments for employee_id={employee_id}")
     try:
         assignments = await get_assignments_by_employee_id(db, employee_id)
@@ -60,7 +64,7 @@ async def get_assignments_by_employee_service(db, employee_id: UUID):
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-async def get_assignments_by_client_service(db, client_id: UUID):
+async def get_assignments_by_client_service(db: AsyncSession, client_id: UUID):
     logger.info(f"Fetching assignments for client_id={client_id}")
     try:
         assignments = await get_assignments_by_client_id(db, client_id)
@@ -74,7 +78,9 @@ async def get_assignments_by_client_service(db, client_id: UUID):
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-async def create_assignment_service(db, assignment_data: AssignmentCreate):
+async def create_assignment_service(
+    db: AsyncSession, assignment_data: AssignmentCreate
+):
     logger.info("Creating new assignment")
     try:
         assignment = await create_assignment(db, assignment_data)
@@ -101,7 +107,7 @@ async def create_assignment_service(db, assignment_data: AssignmentCreate):
 
 
 async def update_assignment_service(
-    db, assignment_id: UUID, assignment_data: AssignmentUpdate
+    db: AsyncSession, assignment_id: UUID, assignment_data: AssignmentUpdate
 ):
     logger.info(f"Updating assignment id={assignment_id}")
     try:
@@ -129,7 +135,7 @@ async def update_assignment_service(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-async def delete_assignment_service(db, assignment_id: UUID):
+async def delete_assignment_service(db: AsyncSession, assignment_id: UUID):
     logger.info(f"Deleting assignment id={assignment_id}")
     try:
         assignment = await delete_assignment(db, assignment_id)

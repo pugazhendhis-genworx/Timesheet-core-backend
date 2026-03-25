@@ -17,7 +17,7 @@ async def get_pg_session():
 DBSession = Annotated[AsyncSession, Depends(get_pg_session)]
 
 
-AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://localhost:8000")
+AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://auth_backend:8000")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{AUTH_SERVICE_URL}/auth/login")
 
 

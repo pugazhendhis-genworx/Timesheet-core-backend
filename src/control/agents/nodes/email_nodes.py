@@ -29,10 +29,6 @@ load_dotenv()
 gemini_client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
 
-# =========================
-# GROQ (TEXT ANALYSIS)
-# =========================
-
 groq_client = Groq(api_key=settings.GROQ_API_KEY)
 
 MAX_GEMINI_RETRIES = 3

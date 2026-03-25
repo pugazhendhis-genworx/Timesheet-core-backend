@@ -39,7 +39,7 @@ async def get_flagged_timesheet_summary_service(db: AsyncSession, timesheet_id: 
     violations = await get_rule_violations_by_timesheet_id_repo(db, timesheet_id)
 
     # Fetch parent timesheet metadata
-    timesheet = get_timesheet_by_id(db, timesheet_id)
+    timesheet = await get_timesheet_by_id(db, timesheet_id)
 
     if not timesheet:
         return None

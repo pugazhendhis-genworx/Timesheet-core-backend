@@ -1,9 +1,13 @@
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Query
 
 from src.api.rest.dependencies import DBSession
-from src.core.services.email_services import get_all_emails_service
+from src.core.services.email_services import (
+    get_all_emails_service,
+    get_email_by_id_service,
+)
 from src.core.services.gmail_service import (
     fetch_new_emails,
     get_message_detail,
@@ -37,6 +41,12 @@ async def get_emails(
             if (e.classification or "").lower() == classification_lower
         ]
     return emails
+
+
+@email_router.get("/get-email/{email_id}", response_model=EmailMessageResponse)
+async def get_email_by_id(email_id: UUID, db: DBSession):
+    """Fetch a single email by its UUID, with attachments."""
+    return await get_email_by_id_service(email_id, db)
 
 
 @email_router.get("/fetch-emails")

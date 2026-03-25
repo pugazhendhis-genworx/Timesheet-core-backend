@@ -108,7 +108,14 @@ async def create_review_for_timesheet(db: AsyncSession, timesheet_id: UUID):
 
 
 async def get_all_timesheets_service(db: AsyncSession):
-    return await get_all_timesheets(db)
+    try:
+        logger.info("Fetching all timesheets")
+        result = await get_all_timesheets(db)
+        logger.info("Fetched %d timesheets", len(result) if result else 0)
+        return result
+    except Exception:
+        logger.exception("Error in get_all_timesheets_service")
+        raise
 
 
 async def get_timesheet_by_id_service(db: AsyncSession, timesheet_id: UUID):

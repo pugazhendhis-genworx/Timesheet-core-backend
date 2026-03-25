@@ -17,7 +17,7 @@ class TimeEntryDisplayResponse(BaseModel):
 
     timeentry_id: UUID
     employee_id: UUID | None = None
-    employee_name: str | None = None  # "John Doe" instead of UUID
+    employee_name: str | None = None
     client_id: UUID
     client_name: str
     start_time: datetime | None = None

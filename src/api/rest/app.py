@@ -1,8 +1,14 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.api.middleware.error_handler import (
+    http_exception_handler,
+    validation_exception_handler,
+)
+from src.api.middleware.request_context import RequestContextMiddleware
 from src.api.rest.routes.approval_routes import approval_router
 from src.api.rest.routes.assignment_routes import assignment_router
 from src.api.rest.routes.attachment_routes import attachment_router
@@ -80,5 +86,8 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.add_middleware(RequestContextMiddleware)
+    app.add_exception_handler(HTTPException, http_exception_handler)
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
     return app
