@@ -1,3 +1,4 @@
+from src.core.services.gcs_service import upload_to_gcs
 from src.core.services.gmail_service import extract_email_metadata
 from src.data.models.postgres.email_model import (
     EmailAttachment,
@@ -35,7 +36,17 @@ from src.utils.email_helper import _extract_sender, _resolve_body
 logger = get_logger(__name__)
 
 
-async def ingest_email(detail, db):
+def _build_gcs_lookup(gcs_attachments: list[dict] | None) -> dict[str, dict]:
+    """
+    Build a filename → {gcs_url, mime_type} mapping from the list
+    returned by ``save_attachments``.
+    """
+    if not gcs_attachments:
+        return {}
+    return {att["filename"]: att for att in gcs_attachments}
+
+
+async def ingest_email(detail, db, *, gcs_attachments: list[dict] | None = None):
     """Async version — used by FastAPI."""
     logger.info("Starting async email ingestion")
 
@@ -102,15 +113,28 @@ async def ingest_email(detail, db):
 
         logger.info(f"Email message saved: id={message.email_message_id}")
 
-        # Save attachments
+        # ── Save attachments (GCS URLs or upload on the fly) ──
+        gcs_lookup = _build_gcs_lookup(gcs_attachments)
+
         for attachment in email_data["attachments"]:
-            logger.debug(f"Saving attachment: {attachment['filename']}")
+            filename = attachment["filename"]
+            mime_type = attachment.get("mimeType", "application/octet-stream")
+
+            if filename in gcs_lookup:
+                # GCS URLs already available (worker pre-uploaded)
+                file_path = gcs_lookup[filename]["gcs_url"]
+                mime_type = gcs_lookup[filename].get("mime_type", mime_type)
+            else:
+                # Fallback: upload inline (shouldn't happen in normal flow)
+                file_path = upload_to_gcs(b"", filename, mime_type)
+
+            logger.debug(f"Saving attachment: {filename} → {file_path}")
             await create_email_attachment(
                 EmailAttachment(
                     email_message_id=message.email_message_id,
-                    file_name=attachment["filename"],
-                    file_type=attachment["mimeType"],
-                    file_path=f"attachments/{attachment['filename']}",
+                    file_name=filename,
+                    file_type=mime_type,
+                    file_path=file_path,
                 ),
                 db,
             )
@@ -126,7 +150,7 @@ async def ingest_email(detail, db):
         raise
 
 
-def ingest_email_sync(detail, db):
+def ingest_email_sync(detail, db, *, gcs_attachments: list[dict] | None = None):
     """Sync version — used by Celery processor worker."""
     logger.info("Starting sync email ingestion")
     try:
@@ -186,15 +210,26 @@ def ingest_email_sync(detail, db):
         )
         logger.info(f"Email message saved: id={message.email_message_id}")
 
-        # Save attachments
+        # ── Save attachments (GCS URLs) ──
+        gcs_lookup = _build_gcs_lookup(gcs_attachments)
+
         for attachment in email_data["attachments"]:
-            logger.debug(f" Saving attachment: {attachment['filename']}")
+            filename = attachment["filename"]
+            mime_type = attachment.get("mimeType", "application/octet-stream")
+
+            if filename in gcs_lookup:
+                file_path = gcs_lookup[filename]["gcs_url"]
+                mime_type = gcs_lookup[filename].get("mime_type", mime_type)
+            else:
+                file_path = upload_to_gcs(b"", filename, mime_type)
+
+            logger.debug(f" Saving attachment: {filename} → {file_path}")
             create_email_attachment_sync(
                 EmailAttachment(
                     email_message_id=message.email_message_id,
-                    file_name=attachment["filename"],
-                    file_type=attachment["mimeType"],
-                    file_path=f"attachments/{attachment['filename']}",
+                    file_name=filename,
+                    file_type=mime_type,
+                    file_path=file_path,
                 ),
                 db,
             )

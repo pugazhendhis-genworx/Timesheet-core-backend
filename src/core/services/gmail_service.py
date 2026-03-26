@@ -178,8 +178,17 @@ def get_message_detail(message_id):
     return message
 
 
-def save_attachments(message):
+def save_attachments(message) -> list[dict]:
+    """
+    Download attachment data from Gmail and upload each file to GCS.
+
+    Returns a list of ``{filename, gcs_url, mime_type}`` dicts so the
+    caller can persist the GCS URLs in the database.
+    """
+    from src.core.services.gcs_service import upload_to_gcs
+
     service = get_service()
+    uploaded: list[dict] = []
 
     for part in message["payload"].get("parts", []):
         if part.get("filename"):
@@ -194,11 +203,17 @@ def save_attachments(message):
             )
 
             data = base64.urlsafe_b64decode(attachment["data"])
+            mime_type = part.get("mimeType", "application/octet-stream")
 
-            os.makedirs("attachments", exist_ok=True)
+            gcs_url = upload_to_gcs(data, part["filename"], mime_type)
 
-            with open(f"attachments/{part['filename']}", "wb") as f:
-                f.write(data)
+            uploaded.append({
+                "filename": part["filename"],
+                "gcs_url": gcs_url,
+                "mime_type": mime_type,
+            })
+
+    return uploaded
 
 
 def mark_as_read(message_id):

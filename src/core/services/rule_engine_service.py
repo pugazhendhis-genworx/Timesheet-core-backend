@@ -92,7 +92,7 @@ async def apply_client_rules(
 
         logger.info(
             f"Valid entries: {len(valid_entries)}, Invalid entries:"
-            "{len(invalid_entries)}"
+            f"{len(invalid_entries)}"
         )
 
         for entry in invalid_entries:  # noqa
@@ -117,8 +117,7 @@ async def apply_client_rules(
             paycode = entry.paycode.paycode if entry.paycode else ""
 
             logger.info(
-                f"Entry -> Date: {entry_date}, Paycode: {paycode},"
-                "Holiday: {is_holiday}"
+                f"Entry -> Date: {entry_date}, Paycode: {paycode},Holiday: {is_holiday}"
             )
 
             # --- VALIDATION ---

@@ -1,26 +1,33 @@
-from pathlib import Path
+import logging
 
-from fastapi import APIRouter
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import RedirectResponse
+
+from src.config.settings import settings
+from src.core.services.gcs_service import generate_signed_url
+
+logger = logging.getLogger(__name__)
 
 attachment_router = APIRouter(tags=["attachments"], prefix="/attachments")
-
-# attachments dir is at: Timesheet-core-backend/attachments
-BASE_DIR = Path(__file__).resolve().parents[4]  # go up to Timesheet-core-backend
-ATTACHMENTS_DIR = BASE_DIR / "attachments"
 
 
 @attachment_router.get("/{filename}")
 async def get_attachment(filename: str):
-    file_path = ATTACHMENTS_DIR / filename
-    # Ensure file exists and is within ATTACHMENTS_DIR (prevent directory traversal)
+    """
+    Return a redirect to a time-limited GCS signed URL for the
+    requested attachment file.
+    """
     try:
-        file_path = file_path.resolve()
-        if not file_path.is_relative_to(ATTACHMENTS_DIR.resolve()):
-            return FileResponse(str(file_path), status_code=401)
-    except ValueError:
-        return FileResponse(str(file_path), status_code=401)
+        gcs_url = (
+            f"gs://{settings.GCS_BUCKET_NAME}"
+            f"/{settings.GCS_BUCKET_PREFIX}/{filename}"
+        )
+        signed_url = generate_signed_url(gcs_url)
+        return RedirectResponse(url=signed_url, status_code=307)
 
-    if not file_path.is_file():
-        return FileResponse(str(file_path), status_code=404)
-    return FileResponse(str(file_path))
+    except Exception as e:
+        logger.exception("Failed to generate signed URL for %s", filename)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Could not generate download URL: {e}",
+        ) from e

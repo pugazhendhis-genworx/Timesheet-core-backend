@@ -24,7 +24,7 @@ def process_email(self, gmail_message_id: str):
     """
     Event-driven Celery task — triggered instantly by the watcher.
     Processes a SINGLE email using SYNC DB (psycopg2):
-      Gmail detail → DB ingestion → save attachments → mark read
+      Gmail detail → upload attachments to GCS → DB ingestion → mark read
 
     Sits idle when queue is empty. No polling.
     """
@@ -34,18 +34,18 @@ def process_email(self, gmail_message_id: str):
         # 1. Fetch full message detail from Gmail API
         detail = get_message_detail(gmail_message_id)
 
-        # 2. Ingest into DB using sync session
+        # 2. Upload attachments to GCS (returns list of {filename, gcs_url, mime_type})
+        gcs_attachments = save_attachments(detail)
+
+        # 3. Ingest into DB using sync session (with GCS URLs)
         db = SyncSessionLocal()
         try:
-            ingested = ingest_email_sync(detail, db)
+            ingested = ingest_email_sync(detail, db, gcs_attachments=gcs_attachments)
         finally:
             db.close()
 
-        # Only save attachments and mark read if email was actually ingested
+        # Only mark read if email was actually ingested
         if ingested:
-            # 3. Download and save attachment files to disk
-            save_attachments(detail)
-
             # 4. Mark as read in Gmail
             mark_as_read(gmail_message_id)
 

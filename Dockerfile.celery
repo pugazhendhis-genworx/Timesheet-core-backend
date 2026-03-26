@@ -3,9 +3,13 @@ FROM python:3.12-slim
 WORKDIR /app
 
 COPY pyproject.toml .
-COPY .env .
-COPY credentials.json .
-COPY history.txt* ./
+
+
+COPY token.json /app/secrets/token.json
+COPY credentials.json /app/secrets/credentials.json
+
+
+
 
 # Install pip deps — celery, redis, gmail libs, dotenv
 RUN pip install --no-cache-dir \
@@ -13,21 +17,27 @@ RUN pip install --no-cache-dir \
     redis \
     python-dotenv \
     google-api-python-client \
+    google-cloud-storage>=2.18.0\
     google-auth \
     google-auth-oauthlib \
     pydantic-settings \
     email-validator \
     asyncpg \
     psycopg2-binary \
-    sqlalchemy
+    sqlalchemy\
+    fastapi\
+    uvicorn
 
-# Create non-root user for Celery
-RUN addgroup --system celery && adduser --system --ingroup celery celery
+
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
+
+
 
 COPY src/ src/
 COPY entrypoint.sh /entrypoint.sh
 
-# Give ownership to celery user
-RUN chown -R celery:celery /app && chmod +x /entrypoint.sh
 
-ENTRYPOINT ["/entrypoint.sh"]
+# Give ownership to celery user
+COPY runner.py /app/runner.py
+
+CMD ["python", "runner.py"]

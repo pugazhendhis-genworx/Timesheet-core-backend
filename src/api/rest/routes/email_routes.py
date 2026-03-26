@@ -55,8 +55,7 @@ def fetch_emails():
 
     for msg in messages:
         detail = get_message_detail(msg["id"])
-        save_attachments(detail)
+        save_attachments(detail)  # uploads to GCS; return value unused here
         mark_as_read(msg["id"])
-        print(detail)
 
     return {"status": "Processed", "count": len(messages)}

@@ -1,5 +1,3 @@
-from contextlib import asynccontextmanager
-
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,7 +24,7 @@ from src.api.rest.routes.paycode_routes import paycode_router
 from src.api.rest.routes.payroll_routes import payroll_router
 from src.api.rest.routes.rule_violation_routes import rule_violation_router
 from src.api.rest.routes.timesheet_routes import timesheet_router
-from src.data.clients.database import Base, engine
+from src.config.settings import settings
 from src.data.models.postgres.assignment_model import Assignment  # noqa
 from src.data.models.postgres.audit_log_model import AuditLog  # noqa
 from src.data.models.postgres.client_model import Client  # noqa
@@ -47,16 +45,8 @@ from src.data.models.postgres.review_model import Approval, ManualReview  # noqa
 from src.data.models.postgres.timesheet_model import TimeEntryRaw, Timesheet  # noqa
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    yield
-    await engine.dispose()
-
-
 def create_app() -> FastAPI:
-    app = FastAPI(lifespan=lifespan)
+    app = FastAPI()
     app.include_router(health_router)
     app.include_router(email_router)
     app.include_router(client_router)
@@ -76,12 +66,7 @@ def create_app() -> FastAPI:
     app.include_router(rule_violation_router)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "http://localhost:5173",
-            "http://localhost:3000",
-            "http://localhost:8000",
-            "http://localhost:8001",
-        ],
+        allow_origins=[settings.FRONTEND_URL, settings.AUTHBACKEND_URL],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

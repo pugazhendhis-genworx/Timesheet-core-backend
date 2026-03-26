@@ -1,0 +1,7 @@
+Resolved 20 packages in 6.41s
+Prepared 1 package in 684ms
+Installed 4 packages in 7ms
+ + google-cloud-core==2.5.0
+ + google-cloud-storage==3.10.1
+ + google-crc32c==1.8.0
+ + google-resumable-media==2.8.0

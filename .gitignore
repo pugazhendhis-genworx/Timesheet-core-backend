@@ -11,6 +11,7 @@ wheels/
 .env
 credentials.json
 token.json
+workforce-login-config.json
 
 .cache/
 .pytest_cache/

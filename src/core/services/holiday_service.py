@@ -25,7 +25,7 @@ async def add_holiday(db: AsyncSession, holiday_data: HolidayCreate) -> Holiday:
         holiday = await create_holiday_repo(db, holiday_data)
 
         logger.info(
-            f"Holiday created: id={holiday.holiday_id}, "
+            f"Holiday created: id={holiday.id}, "
             f"date={holiday.holiday_date}, client_id={holiday.client_id}"
         )
         return holiday

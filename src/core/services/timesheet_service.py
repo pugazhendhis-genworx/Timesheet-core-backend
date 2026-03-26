@@ -243,55 +243,71 @@ async def decide_timesheet_approval_service(
     comment: Optional reviewer comment
     Returns: Updated timesheet display dict
     """
+    logger.info(f"START approval | timesheet_id={timesheet_id}, decision={decision}")
+    try:
+        if decision not in ("APPROVED", "REJECTED"):
+            raise HTTPException(
+                status_code=400,
+                detail="Decision must be 'APPROVED' or 'REJECTED'",
+            )
 
-    if decision not in ("APPROVED", "REJECTED"):
-        raise HTTPException(
-            status_code=400,
-            detail="Decision must be 'APPROVED' or 'REJECTED'",
+        timesheet = await get_timesheet_by_id(db, timesheet_id)
+        logger.info(f"Timesheet fetched: {timesheet}")
+
+        if not timesheet:
+            raise HTTPException(status_code=404, detail="Timesheet not found")
+
+        logger.info(f"Current status: {timesheet.status}")
+
+        if timesheet.status not in ("READY_FOR_APPROVAL", "RECEIVED", "EXTRACTED"):
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Cannot approve/reject timesheet in status: {timesheet.status}"
+                ),
+            )
+        logger.info("Updating timesheet status...")
+        timesheet.status = decision
+        if comment:
+            timesheet.raw_extraction = timesheet.raw_extraction or {}
+            timesheet.raw_extraction["reviewer_comment"] = comment
+        timesheet.updated_at = datetime.now()
+
+        # Mirror the decision onto all linked ManualReview records
+        logger.info("Fetching reviews...")
+        reviews = await get_reviews_by_timesheet_id(db, timesheet_id)
+
+        logger.info(f"Reviews found: {len(reviews) if reviews else 0}")
+        for review in reviews:
+            review.status = decision
+
+        if decision == "APPROVED":
+            logger.info(" Updating payroll approval status...")
+            await update_payroll_approval_status(db, timesheet_id, True)
+
+        await db.commit()
+        await db.refresh(timesheet)
+
+        logger.info(
+            "Timesheet %s %s by reviewer. Comment: %s",
+            timesheet_id,
+            decision,
+            comment,
         )
 
-    timesheet = await get_timesheet_by_id(db, timesheet_id)
-    if not timesheet:
-        raise HTTPException(status_code=404, detail="Timesheet not found")
-
-    if timesheet.status not in ("READY_FOR_APPROVAL", "RECEIVED", "EXTRACTED"):
-        raise HTTPException(
-            status_code=400,
-            detail=(f"Cannot approve/reject timesheet in status: {timesheet.status}"),
+        await create_audit_log(
+            db,
+            action=decision,
+            entity_type="TIMESHEET",
+            entity_id=str(timesheet.timesheet_id),
+            metadata_json={"comment": comment},
         )
-
-    timesheet.status = decision
-    if comment:
-        timesheet.raw_extraction = timesheet.raw_extraction or {}
-        timesheet.raw_extraction["reviewer_comment"] = comment
-    timesheet.updated_at = datetime.now()
-
-    # Mirror the decision onto all linked ManualReview records
-    reviews = await get_reviews_by_timesheet_id(db, timesheet_id)
-    for review in reviews:
-        review.status = decision
-
-    if decision == "APPROVED":
-        await update_payroll_approval_status(db, True)
-
-    await db.refresh(timesheet)
-
-    logger.info(
-        "Timesheet %s %s by reviewer. Comment: %s",
-        timesheet_id,
-        decision,
-        comment,
-    )
-
-    await create_audit_log(
-        db,
-        action=decision,
-        entity_type="TIMESHEET",
-        entity_id=str(timesheet.timesheet_id),
-        metadata_json={"comment": comment},
-    )
-
-    return await get_extracted_timesheet_by_id_for_display(db, timesheet_id)
+        logger.info(" Preparing response...")
+        return await get_extracted_timesheet_by_id_for_display(db, timesheet_id)
+    except Exception:
+        logger.exception("ERROR in decide_timesheet_approval_service")
+        await db.rollback()
+        raise
 
 
 async def get_payroll_ready_timesheets(

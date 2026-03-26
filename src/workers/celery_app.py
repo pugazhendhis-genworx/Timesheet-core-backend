@@ -5,8 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-from src.data.clients.database import Base, sync_engine  # noqa: E402
+REDIS_URL = os.getenv("REDIS_URL", "redis://10.125.46.155:6379/0")
 from src.data.models.postgres.client_model import Client  # noqa: E402, F401
 from src.data.models.postgres.email_model import (  # noqa: E402, F401
     EmailAttachment,
@@ -15,7 +14,6 @@ from src.data.models.postgres.email_model import (  # noqa: E402, F401
     EmailWhitelist,
 )
 
-Base.metadata.create_all(bind=sync_engine)
 print("Database tables created/verified.")
 
 celery_app = Celery(
@@ -35,10 +33,13 @@ celery_app.conf.beat_schedule = {
 
 # Route processor tasks to a dedicated 'processor' queue
 celery_app.conf.task_routes = {
-    "src.workers.tasks.email_watcher.watch_emails": {"queue": "watcher"},
-    "src.workers.tasks.email_processor.process_email": {"queue": "processor"},
+    "src.workers.tasks.email_watcher.watch_emails": {
+        "queue": "pugazh_timeguard_watcher_queue"
+    },
+    "src.workers.tasks.email_processor.process_email": {
+        "queue": "pugazh_timeguard_processor_queue"
+    },
 }
-
 celery_app.conf.timezone = "UTC"
 
 # Serialization
