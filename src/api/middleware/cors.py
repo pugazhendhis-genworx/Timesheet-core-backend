@@ -1,1 +1,0 @@
-"""CORS middleware configuration — placeholder."""

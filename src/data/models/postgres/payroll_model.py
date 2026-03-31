@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, Date, DateTime, Numeric, Text
+from sqlalchemy import Boolean, Column, Date, DateTime, Numeric, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import ForeignKey
@@ -27,6 +27,7 @@ class PayrollReadyEntry(Base):
 
     payroll_entry_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     export_id = Column(UUID(as_uuid=True), ForeignKey("payroll_exports.export_id"))
+    timesheet_id = Column(UUID(as_uuid=True), ForeignKey("timesheets.timesheet_id"))
     client_id = Column(UUID(as_uuid=True), ForeignKey("clients.client_id"))
     employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.employee_id"))
     week_ending = Column(Date)
@@ -36,8 +37,12 @@ class PayrollReadyEntry(Base):
     regular_rate = Column(Numeric)
     overtime_rate = Column(Numeric)
     double_time_rate = Column(Numeric)
-    total_pay = Column(Numeric)
+    reg_pay = Column(Numeric)
+    ot_pay = Column(Numeric)
+    holiday_pay = Column(Numeric)
+    approval_status = Column(Boolean, default=False)
 
     export = relationship("PayrollExport")
     client = relationship("Client")
     employee = relationship("Employee")
+    timesheet = relationship("Timesheet")

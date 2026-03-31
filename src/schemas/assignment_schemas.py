@@ -10,9 +10,9 @@ class AssignmentCreate(BaseModel):
     client_id: UUID
     start_date: date
     end_date: date
-    regular_rate: Decimal
-    overtime_rate: Decimal
-    double_time_rate: Decimal
+    regular_rate: Decimal | None = None
+    overtime_rate: Decimal | None = None
+    double_time_rate: Decimal | None = None
     paycode_id: UUID | None = None
 
 
@@ -32,9 +32,9 @@ class AssignmentResponse(BaseModel):
     client_id: UUID
     start_date: date
     end_date: date
-    regular_rate: Decimal
-    overtime_rate: Decimal
-    double_time_rate: Decimal
+    regular_rate: Decimal | None
+    overtime_rate: Decimal | None
+    double_time_rate: Decimal | None
     paycode_id: UUID | None = None
     is_active: bool
 

@@ -30,6 +30,7 @@ class RuleViolation(Base):
     rule_id = Column(
         UUID(as_uuid=True), ForeignKey("client_rules.rule_id"), nullable=True
     )
+    violation_type = Column(String(50))
     severity = Column(String(20))
     description = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

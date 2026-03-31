@@ -3,7 +3,7 @@ services:
   # ── Auth Postgres (used only by auth backend) ──
   db:
     image: postgres:16-alpine
-    container_name: postgres_server
+    container_name: postgres_server_2
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -13,27 +13,29 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d TimeIQ"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d TimeIQ" ]
       interval: 5s
       timeout: 5s
       retries: 5
     restart: always
 
   auth_backend:
-    build: ../Time_IQ_Auth_backend
-    container_name: auth_Backend
+    build: ../Timeiq_auth_backend_docker
+    container_name: auth_Backend_2
     env_file:
-      - ../Time_IQ_Auth_backend/.env
+      - ../Timeiq_auth_backend_docker/.env
+    environment:
+      - POSTGRES_DB_URL=postgresql+asyncpg://postgres:postgres@db:5432/TimeIQ
     depends_on:
       db:
         condition: service_healthy
     ports:
       - "8000:8000"
     restart: always
-  
+
   core_backend:
     build: ./
-    container_name: TimeIQ_core_backend
+    container_name: TimeIQ_core_backend_2
     env_file:
       - ./.env
     environment:
@@ -51,8 +53,8 @@ services:
     restart: always
 
   frontend:
-    build: ../TimeIQ-FrontEnd
-    container_name: TimeIq-frontend
+    build: ../TimeIQ-frontend_docker
+    container_name: TimeIq-frontend_2
     depends_on:
       - auth_backend
       - core_backend
@@ -62,7 +64,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: timeiq-redis-container
+    container_name: timeiq-redis-container_2
     ports:
       - "6379:6379"
     volumes:
@@ -73,7 +75,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.celery
-    container_name: timeiq-celery-watcher-final
+    container_name: timeiq-celery-watcher-final_2
     command: celery -A src.workers.celery_app.celery_app worker -Q watcher -n watcher@%h -l info
     env_file:
       - .env
@@ -93,7 +95,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.celery
-    container_name: timeiq-celery-beat-final
+    container_name: timeiq-celery-beat-final_2
     command: celery -A src.workers.celery_app.celery_app beat -l info --schedule=/tmp/celerybeat-schedule
     env_file:
       - .env
@@ -113,7 +115,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.celery
-    container_name: timeiq-celery-processor-final
+    container_name: timeiq-celery-processor-final_2
     command: celery -A src.workers.celery_app.celery_app worker -Q processor -n processor@%h -l info -c 4
     env_file:
       - .env
