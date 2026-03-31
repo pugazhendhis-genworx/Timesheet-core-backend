@@ -48,9 +48,9 @@ async def process_unprocessed_emails(db: AsyncSession):
                 if output.get("error"):
                     logger.warning(
                         f"""LangGraph returned error for
-                          email_id={email.email_message_id}: {output["error"]}"""
+                          email_id={email.email_message_id}: {output.get("error")}"""
                     )
-                    raise RuntimeError(output["error"])
+                    raise RuntimeError(str(output["error"]))
 
                 classification = output.get("classification", "OTHER")
                 email.classification = classification

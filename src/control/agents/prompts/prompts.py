@@ -30,9 +30,24 @@ def build_extract_timesheet_structure(email_body, email_subject, attachment_text
     prompt = langfuse.get_prompt(
         "time_guard/extract_timesheet_structure", label="production"
     )
+    expected_json = {
+        "week_ending": "",
+        "entries": [
+            {
+                "employee_name": "",
+                "employee_email": "",
+                "date": "",
+                "start_time": "",
+                "end_time": "",
+                "total_hours": 0,
+                "paycode": "",
+            }
+        ],
+    }
     compiled_prompt = prompt.compile(
         email_body=email_body,
         email_subject=email_subject,
         attachment_text=attachment_text,
+        expected_json=expected_json,
     )
     return compiled_prompt

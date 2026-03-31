@@ -11,6 +11,7 @@ from sqlalchemy import select
 from src.config.settings import settings
 from src.control.agents.prompts.prompts import (
     build_extract_attachments_prompt,
+    build_extract_timesheet_structure,
     build_timesheet_classification_prompt,
 )
 from src.control.agents.utils.attachment_utils import (
@@ -193,55 +194,11 @@ async def classify_email(state):
 async def extract_timesheet(state):
 
     try:
-        prompt = f"""
-Extract structured timesheet information.
-
-Return JSON ONLY. Do not include any text outside the JSON block.
-Rules:
-- Normalize date as YYYY-MM-DD
-- Normalize time as HH:MM
-- If hours are given without times infer start/end
-- Week Ending Rules:
-    1. If "Week Ending" or similar field is explicitly present, extract it.
-    2. If not present, infer week_ending as the LATEST date found in the entries.
-    3. If multiple dates exist, use the maximum (most recent) date.
-    4. Normalize week_ending as YYYY-MM-DD.
-Rules for hour calculation:
-    1. If a "Total" or "Total Hours" value is present in the document,
-    treat it as the FINAL worked hours. Do NOT subtract breaks again.
-    2. Only calculate hours using:
-    (End Time - Start Time - Break)
-    when a Total value is NOT provided.
-    3. Break time should only be used if the document does not already
-    provide the final Total hours.
-    4. Provide the final calculated amount as total_hours. DO NOT apply overtime rules.
-- Return JSON only
-
-{{
-"week_ending":"",
-"entries":[
-{{
-"employee_name":"",
-"employee_email":"",
-"date":"",
-"start_time":"",
-"end_time":"",
-"total_hours":"",
-"paycode":""
-}}
-]
-}}
-
-EMAIL BODY:
-{state.get("email_body")}
-
-EMAIL SUBJECT:
-{state.get("email_subject")}
-
-ATTACHMENTS TEXT:
-{state.get("attachment_text")}
-"""
-
+        prompt = build_extract_timesheet_structure(
+            state.get("email_body"),
+            state.get("email_subject"),
+            state.get("attachment_text"),
+        )
         response = groq_client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
