@@ -207,11 +207,13 @@ def save_attachments(message) -> list[dict]:
 
             gcs_url = upload_to_gcs(data, part["filename"], mime_type)
 
-            uploaded.append({
-                "filename": part["filename"],
-                "gcs_url": gcs_url,
-                "mime_type": mime_type,
-            })
+            uploaded.append(
+                {
+                    "filename": part["filename"],
+                    "gcs_url": gcs_url,
+                    "mime_type": mime_type,
+                }
+            )
 
     return uploaded
 

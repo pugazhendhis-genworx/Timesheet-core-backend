@@ -46,9 +46,7 @@ async def get_flagged_timesheets_summary_with_latest_violation_repo(
     latest_subq = (
         select(
             RuleViolation.timesheet_id,
-            func.max(RuleViolation.created_at).label(
-                "latest_violation_created_at"
-            ),
+            func.max(RuleViolation.created_at).label("latest_violation_created_at"),
         )
         .group_by(RuleViolation.timesheet_id)
         .subquery()

@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import Any, TypedDict
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,7 +11,7 @@ class EmailProcessingState(TypedDict, total=False):
 
     client_id: str | None
 
-    attachments: list[dict]
+    attachments: list[dict[str, Any]]
     attachment_text: str
     attachment_types: list[str]
 
@@ -19,6 +19,6 @@ class EmailProcessingState(TypedDict, total=False):
 
     classification: str
 
-    timesheet_data: dict | None
+    timesheet_data: dict[str, Any] | None
 
     error: str | None

@@ -1,4 +1,6 @@
-COMMON_ERROR_RESPONSES = {
+from typing import Any
+
+COMMON_ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
     400: {
         "description": "Bad Request",
         "content": {"application/json": {"example": {"detail": "Bad request"}}},

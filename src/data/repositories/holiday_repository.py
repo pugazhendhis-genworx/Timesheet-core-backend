@@ -1,8 +1,10 @@
+from collections.abc import Sequence
 from datetime import date
-from typing import Sequence
+from typing import cast
 from uuid import UUID
 
 from sqlalchemy import delete, select, update
+from sqlalchemy.engine import CursorResult
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.data.models.postgres.holiday_model import Holiday
@@ -22,7 +24,9 @@ async def create_holiday_repo(db: AsyncSession, holiday_data: HolidayCreate) -> 
     return new_holiday
 
 
-async def get_holidays_by_client_repo(db: AsyncSession, client_id: UUID) -> Sequence[Holiday]:
+async def get_holidays_by_client_repo(
+    db: AsyncSession, client_id: UUID
+) -> Sequence[Holiday]:
     stmt = (
         select(Holiday)
         .where(Holiday.client_id == client_id)
@@ -56,7 +60,7 @@ async def update_holiday_repo(
     update_dict = update_data.model_dump(exclude_unset=True)
     if not update_dict:
         return await get_holiday_by_id_repo(db, holiday_id)
-        
+
     stmt = (
         update(Holiday)
         .where(Holiday.id == holiday_id)
@@ -72,4 +76,5 @@ async def delete_holiday_repo(db: AsyncSession, holiday_id: UUID) -> bool:
     stmt = delete(Holiday).where(Holiday.id == holiday_id)
     result = await db.execute(stmt)
     await db.commit()
-    return result.rowcount > 0
+    cursor_result = cast(CursorResult, result)
+    return cursor_result.rowcount > 0

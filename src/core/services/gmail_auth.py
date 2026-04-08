@@ -45,7 +45,7 @@ def _refresh_with_retry(creds: Credentials):
             if attempt == MAX_REFRESH_RETRIES:
                 logger.error("Token refresh failed after %d attempts: %s", attempt, e)
                 raise
-            wait = RETRY_BACKOFF_BASE ** attempt
+            wait = RETRY_BACKOFF_BASE**attempt
             logger.warning(
                 "Token refresh attempt %d/%d failed (%s), retrying in %ds...",
                 attempt,

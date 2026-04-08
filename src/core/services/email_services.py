@@ -50,9 +50,7 @@ async def get_all_emails_service(db):
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-async def get_email_by_id_service(
-    email_id: UUID, db
-) -> EmailMessageResponse:
+async def get_email_by_id_service(email_id: UUID, db) -> EmailMessageResponse:
     """Fetch a single email by its UUID, enriched with attachments."""
     logger.info(f"Fetching email by id={email_id}")
 

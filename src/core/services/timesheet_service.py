@@ -48,7 +48,6 @@ async def create_timesheet_from_extraction(
     timesheet_data: dict,
 ) -> Timesheet:
     """Create a Timesheet record and its associated TimeEntryRaw records."""
-
     week_ending_str = timesheet_data.get("week_ending")
     week_ending = _resolve_week_ending(week_ending_str) if week_ending_str else None
     if week_ending_str and not week_ending:

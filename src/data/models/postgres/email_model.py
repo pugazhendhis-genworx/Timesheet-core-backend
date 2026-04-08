@@ -12,7 +12,7 @@ from sqlalchemy import (
     Text,
 )
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from src.data.clients.database import Base
@@ -57,11 +57,11 @@ class EmailMessage(Base):
     body = Column(Text)
     received_at = Column(DateTime(timezone=True), server_default=func.now())
     is_reply = Column(Boolean)
-    processed_status = Column(
+    processed_status: Mapped[ProcessedStatus] = mapped_column(
         Enum(ProcessedStatus, name="processed_status_enum", native_enum=False),
         default=ProcessedStatus.INGESTED,
     )
-    classification = Column(
+    classification: Mapped[EmailClassification] = mapped_column(
         Enum(EmailClassification, name="email_classification_enum", native_enum=False),
         nullable=True,
     )
@@ -83,7 +83,7 @@ class EmailAttachment(Base):
     file_type = Column(String(100))
     file_path = Column(Text)
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
-    processing_status = Column(
+    processing_status: Mapped[ProcessedStatus | None] = mapped_column(
         Enum(ProcessedStatus, name="processed_status_enum", native_enum=False),
         nullable=True,
     )

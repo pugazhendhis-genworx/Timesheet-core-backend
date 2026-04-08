@@ -27,12 +27,12 @@ def _normalize(s: str) -> str:
     return " ".join(s.strip().lower().split())
 
 
-FUZZY_MATCH_THRESHOLD = 80
+FUZZY_MATCH_THRESHOLD: float = 80.0
 
 
 def _fuzzy_name_match(employees: list[Employee], name: str) -> Employee | None:
     best_match = None
-    best_score = 0
+    best_score: float = 0.0
 
     normalized_input = _normalize(name)
 
@@ -46,7 +46,7 @@ def _fuzzy_name_match(employees: list[Employee], name: str) -> Employee | None:
     return best_match
 
 
-def _get_fuzzy_score(name: str, employee: Employee) -> int:
+def _get_fuzzy_score(name: str, employee: Employee) -> float:
     """Get fuzzy match score between name and employee full name."""
     normalized_input = _normalize(name)
     full_name = _normalize(f"{employee.first_name} {employee.last_name}")

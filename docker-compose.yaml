@@ -53,13 +53,17 @@ services:
     restart: always
 
   frontend:
-    build: ../TimeIQ-frontend_docker
+    build:
+      context: ../TimeIQ-frontend_docker
+      args:
+        VITE_AUTH_BACKEND_URL: "http://localhost:8000"
+        VITE_CORE_BACKEND_URL: "http://localhost:8001"
     container_name: TimeIq-frontend_2
     depends_on:
       - auth_backend
       - core_backend
     ports:
-      - "5173:5173"
+      - "8080:8080"
     restart: always
 
   redis:
@@ -76,7 +80,7 @@ services:
       context: .
       dockerfile: Dockerfile.celery
     container_name: timeiq-celery-watcher-final_2
-    command: celery -A src.workers.celery_app.celery_app worker -Q watcher -n watcher@%h -l info
+    command: celery -A src.workers.celery_app.celery_app worker -Q pugazh_timeguard_watcher_queue -n watcher@%h -l info
     env_file:
       - .env
     environment:
@@ -116,7 +120,7 @@ services:
       context: .
       dockerfile: Dockerfile.celery
     container_name: timeiq-celery-processor-final_2
-    command: celery -A src.workers.celery_app.celery_app worker -Q processor -n processor@%h -l info -c 4
+    command: celery -A src.workers.celery_app.celery_app worker -Q pugazh_timeguard_processor_queue -n processor@%h -l info -c 4
     env_file:
       - .env
     environment:

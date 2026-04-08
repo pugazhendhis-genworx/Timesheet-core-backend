@@ -45,7 +45,7 @@ def parse_excel_timesheet(file_data: bytes) -> str:
     """
     try:
         df = pd.read_excel(io.BytesIO(file_data))
-        return df.to_string()
+        return str(df.to_string())
     except Exception as e:
         logger.exception("Excel parsing failed")
         raise RuntimeError(f"Excel parse error: {str(e)}") from e

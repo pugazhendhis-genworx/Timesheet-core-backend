@@ -38,10 +38,10 @@ class RuleConfig(BaseModel):
         "dt_pay",
         "holiday_pay",
     )
-    def serialize_decimal(self, value):
+    def serialize_decimal(self, value: Decimal) -> float:
         if isinstance(value, Decimal):
             return float(value)
-        return value
+        return float(value)
 
 
 class ClientRuleCreate(BaseModel):

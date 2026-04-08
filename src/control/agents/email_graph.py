@@ -1,3 +1,5 @@
+from typing import Any
+
 from langgraph.graph import END, StateGraph
 
 from src.control.agents.email_state import EmailProcessingState
@@ -9,20 +11,20 @@ from src.control.agents.nodes.email_nodes import (
 )
 
 
-def route_after_classification(state):
+def route_after_classification(state: EmailProcessingState) -> str:
     if state.get("classification") == "TIMESHEET":
         return "extract_timesheet"
     return END
 
 
-def route_after_extraction(state):
+def route_after_extraction(state: EmailProcessingState) -> str:
     """Skip classification if attachment extraction errored out."""
     if state.get("error"):
         return END
     return "classify_email"
 
 
-def build_graph():
+def build_graph() -> Any:
 
     graph = StateGraph(EmailProcessingState)
 

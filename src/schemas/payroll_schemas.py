@@ -37,12 +37,12 @@ class PayrollReadyEntryResponse(BaseModel):
         "ot_pay",
         "holiday_pay",
     )
-    def serialize_decimal(self, value: Decimal | None):
+    def serialize_decimal(self, value: Decimal | None) -> float | None:
         if value is None:
             return None
         if isinstance(value, Decimal):
             return float(value)
-        return value
+        return float(value)
 
 
 class PayrollReadyListEnvelope(BaseModel):

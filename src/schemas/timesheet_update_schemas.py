@@ -10,4 +10,3 @@ class TimesheetUpdate(BaseModel):
     week_ending: date | None = None
     status: str | None = None
     raw_extraction: dict[str, Any] | None = None
-

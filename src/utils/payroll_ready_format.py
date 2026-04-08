@@ -9,9 +9,9 @@ def _build_payroll_ready_timesheet(timesheet: Timesheet) -> dict | None:
         return None  # Skip timesheets with no entries
 
     entries_data = []
-    total_regular = 0
-    total_overtime = 0
-    total_double_time = 0
+    total_regular: float = 0.0
+    total_overtime: float = 0.0
+    total_double_time: float = 0.0
 
     for entry in timesheet.entries:
         emp = entry.employee

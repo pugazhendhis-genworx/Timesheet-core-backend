@@ -21,6 +21,7 @@ from src.api.rest.routes.health_routes import health_router
 from src.api.rest.routes.holiday_routes import holiday_router
 from src.api.rest.routes.manual_review_routes import review_router
 from src.api.rest.routes.paycode_routes import paycode_router
+from src.api.rest.routes.payroll_payslip_routes import payroll_payslip_router
 from src.api.rest.routes.payroll_routes import payroll_router
 from src.api.rest.routes.rule_violation_routes import rule_violation_router
 from src.api.rest.routes.timesheet_routes import timesheet_router
@@ -61,6 +62,7 @@ def create_app() -> FastAPI:
     app.include_router(audit_log_router)
     app.include_router(attachment_router)
     app.include_router(payroll_router)
+    app.include_router(payroll_payslip_router)
     app.include_router(holiday_router)
     app.include_router(rule_router)
     app.include_router(rule_violation_router)

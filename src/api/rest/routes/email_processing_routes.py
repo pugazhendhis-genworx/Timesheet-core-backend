@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from src.api.rest.dependencies import DBSession, require_roles
@@ -15,7 +17,7 @@ email_process_router = APIRouter(
 
 
 @email_process_router.post("/process-all", responses=COMMON_ERROR_RESPONSES)
-async def process_all_emails(db: DBSession):
+async def process_all_emails(db: DBSession) -> dict[str, Any]:
     try:
         result = await process_unprocessed_emails(db)
         return {
@@ -30,7 +32,7 @@ async def process_all_emails(db: DBSession):
 
 
 @email_process_router.post("/reprocess-failed", responses=COMMON_ERROR_RESPONSES)
-async def reprocess_failed_emails_endpoint(db: DBSession):
+async def reprocess_failed_emails_endpoint(db: DBSession) -> dict[str, Any]:
     try:
         result = await reprocess_failed_emails(db)
         return {

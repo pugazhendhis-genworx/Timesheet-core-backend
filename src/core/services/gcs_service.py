@@ -5,6 +5,7 @@ generating signed URLs for email attachments.
 
 import datetime
 import logging
+import os
 
 import google.auth
 from google.auth import impersonated_credentials
@@ -80,34 +81,70 @@ def upload_to_gcs(
     content_type: str = "application/octet-stream",
 ) -> str:
     """
-    Upload raw bytes to GCS.
+    Upload raw bytes to GCS. Falls back to local attachments folder if GCS fails.
 
-    Returns the ``gs://`` URI stored in the DB as ``file_path``.
+    Returns the ``gs://`` URI or the local path ``attachments/<file_name>``
+    stored in the DB as ``file_path``.
     """
-    client = _get_storage_client()
-    bucket = client.bucket(settings.GCS_BUCKET_NAME)
-    blob_name = _build_blob_name(file_name)
-    blob = bucket.blob(blob_name)
+    try:
+        client = _get_storage_client()
+        bucket = client.bucket(settings.GCS_BUCKET_NAME)
+        blob_name = _build_blob_name(file_name)
+        blob = bucket.blob(blob_name)
 
-    blob.upload_from_string(file_data, content_type=content_type)
+        blob.upload_from_string(file_data, content_type=content_type)
 
-    gcs_url = f"gs://{settings.GCS_BUCKET_NAME}/{blob_name}"
-    logger.info("Uploaded %s → %s", file_name, gcs_url)
-    return gcs_url
+        gcs_url = f"gs://{settings.GCS_BUCKET_NAME}/{blob_name}"
+        logger.info("Uploaded %s → %s", file_name, gcs_url)
+        return gcs_url
+    except Exception as e:
+        logger.warning(
+            "GCS upload failed for %s: %s. Falling back to local storage.", file_name, e
+        )
+        os.makedirs("attachments", exist_ok=True)
+        local_path = os.path.join("attachments", file_name)
+        with open(local_path, "wb") as f:
+            f.write(file_data)
+        logger.info("Saved %s locally → %s", file_name, local_path)
+        return local_path
 
 
-def download_from_gcs(gcs_url: str) -> bytes:
+def download_from_gcs(file_path: str) -> bytes:
     """
-    Download file bytes from a ``gs://`` URI.
+    Download file bytes from a ``gs://`` URI or local fallback path.
+    If both GCS and local fallback fail, raises an error.
     """
-    bucket_name, blob_name = _parse_gs_uri(gcs_url)
-    client = _get_storage_client()
-    bucket = client.bucket(bucket_name)
-    blob = bucket.blob(blob_name)
+    if file_path.startswith("gs://"):
+        try:
+            bucket_name, blob_name = _parse_gs_uri(file_path)
+            client = _get_storage_client()
+            bucket = client.bucket(bucket_name)
+            blob = bucket.blob(blob_name)
 
-    data = blob.download_as_bytes()
-    logger.debug("Downloaded %d bytes from %s", len(data), gcs_url)
-    return data
+            data = blob.download_as_bytes()
+            logger.debug("Downloaded %d bytes from %s", len(data), file_path)
+            return data
+        except Exception as e:
+            logger.warning(
+                "Failed to download from GCS (%s): %s. Falling back to local storage.",
+                file_path,
+                e,
+            )
+            file_name = file_path.split("/")[-1]
+            local_path = os.path.join("attachments", file_name)
+    else:
+        local_path = file_path
+
+    try:
+        with open(local_path, "rb") as f:
+            data = f.read()
+            logger.debug(
+                "Downloaded %d bytes from local path %s", len(data), local_path
+            )
+            return data
+    except Exception as e:
+        logger.error("Failed to download from local storage (%s): %s", local_path, e)
+        raise RuntimeError(f"Both GCS and local fallback failed for {file_path}") from e
 
 
 def generate_signed_url(
@@ -148,7 +185,7 @@ def _parse_gs_uri(gcs_url: str) -> tuple[str, str]:
     if not gcs_url.startswith("gs://"):
         raise ValueError(f"Invalid GCS URI (must start with gs://): {gcs_url}")
 
-    without_scheme = gcs_url[len("gs://"):]
+    without_scheme = gcs_url[len("gs://") :]
     parts = without_scheme.split("/", 1)
     if len(parts) != 2 or not parts[1]:
         raise ValueError(f"Invalid GCS URI (missing object path): {gcs_url}")

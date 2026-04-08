@@ -1,0 +1,23 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.5
+    hooks:
+      - id: ruff
+        name: "Ruff - Lint and format checks"
+        args: [--fix, --exit-zero]
+        stages: [pre-commit]
+      - id: ruff-format
+        name: "Ruff - Format"
+        stages: [pre-commit]
+
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from https://pre-commit.com
+
+    for more information, see https://pre-commit.com
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false
